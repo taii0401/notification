@@ -31,6 +31,16 @@ Notification Delivery Service 是一套負責非同步派送通知的服務。
 6. notification_attempts
 7. idempotency_keys
 
+| Table | 中文名稱 | Description |
+|---|---|---|
+| projects | 專案 | 使用 Notification Delivery Service 的 Client Project |
+| api_keys | API 金鑰 | Project 呼叫 API 時使用的認證金鑰 |
+| notification_templates | 通知範本 | Email / Webhook 等通知內容範本 |
+| notifications | 通知 | 一次邏輯上的通知需求 |
+| notification_deliveries | 通知派送 | Notification 透過指定 Provider 的實際派送工作 |
+| notification_attempts | 通知派送嘗試紀錄 | 每一次呼叫 Provider 的執行結果 |
+| idempotency_keys | 冪等鍵 | 防止相同 Client Request 重複建立 Notification |
+
 Laravel Queue 額外使用：
 
 - jobs
