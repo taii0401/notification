@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name', 'slug', 'status'])]
+#[Fillable(['uuid', 'name', 'slug', 'status'])]
 class Project extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
