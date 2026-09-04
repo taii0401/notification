@@ -86,7 +86,7 @@ class ProjectController extends Controller
     public function destroy(Project $project): JsonResponse
     {
         DB::transaction(function () use ($project) {
-            $project->update(['status' => 'inactive']); //將狀態停用
+            $project->update(['status' => 'revoked']);
             $project->delete();
         });
 
