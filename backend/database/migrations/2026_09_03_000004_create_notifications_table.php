@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique()->comment('UUID');
             $table->foreignId('project_id')->constrained()->restrictOnDelete();
-            $table->foreignId('template_id')->nullable()->constrained('notification_templates')->nullOnDelete();
+            $table->foreignId('template_id')->nullable()->constrained('notification_templates')->nullOnDelete(); //Template 刪除不影響歷史通知
             $table->string('event_type', 100)->index()->comment('事件類型');
             $table->string('channel', 30)->index()->comment('通知管道：email / webhook');
             $table->string('recipient', 500)->comment('收件目標：email / webhook');

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('notification_deliveries', function (Blueprint $table) {
             $table->comment('通知派送');
             $table->id();
-            $table->foreignId('notification_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('notification_id')->constrained()->cascadeOnDelete(); //Delivery 完全依附 Notification
             $table->string('provider', 50)->index()->comment('派送服務提供者：ses / smtp / webhook');
             $table->string('status', 30)->default('pending')->index()->comment('狀態：pending / processing / sent / failed');
             $table->unsignedInteger('attempt_count')->default(0)->comment('已重試次數');

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique()->comment('UUID');
             $table->string('name', 100)->comment('專案名稱');
             $table->string('slug', 100)->unique()->comment('專案唯一識別字串');
-            $table->string('status', 20)->default('active')->index()->comment('狀態：active / inactive');
+            $table->string('status', 20)->default('active')->index()->comment('狀態：active / inactive / revoked');
             $table->timestamps();
             $table->softDeletes();
         });
