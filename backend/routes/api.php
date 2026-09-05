@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\NotificationController;
 
 /* apiResource會自動建立
     GET     /api/projects               index()
@@ -16,3 +17,8 @@ use App\Http\Controllers\Api\ApiKeyController;
 Route::apiResource('projects', ProjectController::class);
 //API Key(不可更新)
 Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->except(['update']); 
+//通知
+Route::middleware('api.key')->group(function () {
+    //傳送通知
+    Route::post('notifications', [NotificationController::class,'store']);
+});
