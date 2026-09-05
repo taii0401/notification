@@ -29,6 +29,6 @@ class NotificationTemplate extends Model
 
     public function notifications(): HasMany
     {
-        return $this->hasMany(Notification::class, 'template_id');
+        return $this->hasMany(NotificationMessage::class, 'template_id');
     }
 }

@@ -34,7 +34,7 @@ class NotificationDelivery extends Model
 
     public function notification(): BelongsTo
     {
-        return $this->belongsTo(Notification::class);
+        return $this->belongsTo(NotificationMessage::class);
     }
 
     public function attempts(): HasMany

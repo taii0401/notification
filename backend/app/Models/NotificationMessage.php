@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
+    'uuid',
     'project_id',
     'template_id',
     'event_type',
@@ -24,9 +25,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'sent_at',
     'failed_at',
 ])]
-class Notification extends Model
+class NotificationMessage extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
+
+    protected $table = 'notifications';
 
     /** @return array<int, string> */
     public function uniqueIds(): array
