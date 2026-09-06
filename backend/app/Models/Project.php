@@ -41,7 +41,7 @@ class Project extends Model
 
     public function notifications(): HasMany
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasMany(NotificationMessage::class);
     }
 
     public function idempotencyKeys(): HasMany

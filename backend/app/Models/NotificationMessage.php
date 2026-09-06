@@ -56,7 +56,7 @@ class NotificationMessage extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class, 'project_id');
     }
 
     public function template(): BelongsTo
@@ -66,11 +66,11 @@ class NotificationMessage extends Model
 
     public function deliveries(): HasMany
     {
-        return $this->hasMany(NotificationDelivery::class);
+        return $this->hasMany(NotificationDelivery::class, 'notification_id');
     }
 
     public function idempotencyKeys(): HasMany
     {
-        return $this->hasMany(IdempotencyKey::class);
+        return $this->hasMany(IdempotencyKey::class, 'notification_id');
     }
 }

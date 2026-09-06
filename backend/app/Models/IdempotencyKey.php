@@ -28,11 +28,11 @@ class IdempotencyKey extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class, 'project_id');
     }
 
     public function notification(): BelongsTo
     {
-        return $this->belongsTo(NotificationMessage::class);
+        return $this->belongsTo(NotificationMessage::class, 'notification_id');
     }
 }
