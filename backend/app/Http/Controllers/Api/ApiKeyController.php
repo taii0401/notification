@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+use App\Exceptions\ApiClientException;
 use App\Http\Requests\StoreApiKeyRequest;
 
 use App\Http\Controllers\Controller;
@@ -123,9 +124,7 @@ class ApiKeyController extends Controller
             $apiKey->delete();
         });
 
-        return response()->json([
-            'message' => 'API Key revoked successfully.',
-        ]);
+        throw new ApiClientException(40501);
     }
 
     /**
@@ -133,9 +132,8 @@ class ApiKeyController extends Controller
      */
     private function ensureApiKeyBelongsToProject(Project $project, ApiKey $apiKey): void 
     {
-        abort_unless(
-            $apiKey->project_id === $project->id,
-            404
-        );
+        if ($apiKey->project_id !== $project->id) {
+            throw new ApiClientException(40401);
+        }
     }
 }

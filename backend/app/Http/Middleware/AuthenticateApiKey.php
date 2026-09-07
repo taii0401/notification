@@ -2,9 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Closure, DB;
+use Closure;
 use Illuminate\Http\Request;
 
+use App\Exceptions\ApiClientException;
 use App\Models\ApiKey;
 
 class AuthenticateApiKey
@@ -14,9 +15,7 @@ class AuthenticateApiKey
         $plainTextKey = $request->bearerToken();
 
         if (!$plainTextKey) {
-            return response()->json([
-                'message' => 'API Key is required.',
-            ], 401);
+            throw new ApiClientException(40101);
         }
 
         $hash = hash('sha256', $plainTextKey);
@@ -26,36 +25,26 @@ class AuthenticateApiKey
             ->first();
 
         if (!$apiKey) {
-            return response()->json([
-                'message' => 'Invalid API Key.',
-            ], 401);
+            throw new ApiClientException(40102);
         }
 
         if ($apiKey->status !== 'active') {
-            return response()->json([
-                'message' => 'API Key is not active.',
-            ], 401);
+            throw new ApiClientException(40103);
         }
 
         if (
             $apiKey->expires_at !== null
             && $apiKey->expires_at->isPast()
         ) {
-            return response()->json([
-                'message' => 'API Key has expired.',
-            ], 401);
+            throw new ApiClientException(40104);
         }
 
         if (!$apiKey->project) {
-            return response()->json([
-                'message' => 'Project is unavailable.',
-            ], 403);
+            throw new ApiClientException(40301);
         }
 
         if ($apiKey->project->status !== 'active') {
-            return response()->json([
-                'message' => 'Project is not active.',
-            ], 403);
+            throw new ApiClientException(40302);
         }
 
         $apiKey->update([
