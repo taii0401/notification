@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Notifications\Notification as LaravelNotification;
+use App\Services\Notifications\CreateNotificationService;
 
 use App\Http\Requests\StoreNotificationRequest;
 
@@ -16,52 +17,24 @@ use App\Models\NotificationDelivery;
 
 class NotificationController extends Controller
 {
-    public function store(StoreNotificationRequest $request): JsonResponse 
+    public function store(StoreNotificationRequest $request, CreateNotificationService $service): JsonResponse
     {
         $project = $request->attributes->get('current_project');
+        $idempotencyKey = $request->idempotencyKey();
 
-        $result = DB::transaction(
-            function () use ($request, $project) {
-                //建立 Notification
-                $notification = NotificationMessage::create([
-                    'project_id' => $project->id,
-                    'event_type' => $request->input('event_type'),
-                    'channel' => $request->input('channel'),
-                    'recipient' => $request->input('recipient'),
-                    'payload' => $request->input('data'),
-                    'metadata' => null,
-                    'status' => 'pending',
-                    'scheduled_at' => $request->input('scheduled_at'),
-                ]);
-
-                //決定 Provider
-                $provider = match ($notification->channel) {
-                    'email' => 'mock_email',
-                    'webhook' => 'http_webhook',
-                    default => throw new \RuntimeException(
-                        'Unsupported notification channel.'
-                    ),
-                };
-
-                //建立 Delivery
-                $delivery = $notification->deliveries()->create([
-                    'provider' => $provider,
-                    'status' => 'pending',
-                    'attempt_count' => 0,
-                ]);
-
-                return [
-                    'notification' => $notification,
-                    'delivery' => $delivery,
-                ];
-            }
+        $result = $service->execute(
+            project: $project,
+            data: $request->validated(),
+            idempotencyKey: $idempotencyKey
         );
 
         $notification = $result['notification'];
         $delivery = $result['delivery'];
 
         return response()->json([
-            'message' => 'Notification created successfully.',
+            'message' => $result['replayed']
+                ? 'Notification already exists.'
+                : 'Notification created successfully.',
             'data' => [
                 'uuid' => $notification->uuid,
                 'event_type' => $notification->event_type,
@@ -75,6 +48,9 @@ class NotificationController extends Controller
                     'status' => $delivery?->status,
                 ],
             ],
-        ], 201);
+            'meta' => [
+                'idempotent_replay' => $result['replayed'],
+            ],
+        ], $result['replayed'] ? 200 : 201);
     }
 }

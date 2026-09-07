@@ -12,6 +12,17 @@ class StoreNotificationRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->headers->has('Idempotency-Key')) {
+            $this->merge([
+                'idempotency_key' => trim(
+                    (string) $this->header('Idempotency-Key')
+                ),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -60,7 +71,23 @@ class StoreNotificationRequest extends FormRequest
                 'date',
                 'after:now',
             ],
+
+            'idempotency_key' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
         ];
+    }
+
+    public function idempotencyKey(): ?string
+    {
+        $idempotencyKey = $this->validated('idempotency_key');
+
+        return is_string($idempotencyKey)
+            ? $idempotencyKey
+            : null;
     }
 
     public function messages(): array

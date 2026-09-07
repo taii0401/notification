@@ -1,0 +1,154 @@
+<?php
+
+namespace App\Services\Notifications;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
+
+use App\Exceptions\ApiClientException;
+use App\Services\Idempotency\RequestHashService;
+
+use App\Models\IdempotencyKey;
+use App\Models\NotificationMessage;
+use App\Models\Project;
+
+class CreateNotificationService
+{
+    public function __construct(private RequestHashService $requestHashService) 
+    {   
+
+    }
+
+    public function execute(Project $project, array $data, ?string $idempotencyKey = null): array 
+    {
+        $requestHash = null;
+
+        if ($idempotencyKey !== null && trim($idempotencyKey) === '') {
+            throw new \InvalidArgumentException(
+                'Idempotency key must not be empty.'
+            );
+        }
+
+        //檢查是否已經在執行了
+        if ($idempotencyKey !== null) {
+            $requestHash = $this->requestHashService->make([
+                'event_type' => $data['event_type'],
+                'channel' => $data['channel'],
+                'recipient' => $data['recipient'],
+                'template' => $data['template'] ?? null,
+                'data' => $data['data'] ?? null,
+                'scheduled_at' => $data['scheduled_at'] ?? null,
+            ]);
+
+            $existing = $this->findExisting($project, $idempotencyKey);
+
+            if ($existing !== null) {
+                return $this->resolveExisting($existing, $requestHash);
+            }
+        }
+
+        try {
+            return DB::transaction(
+                function () use ($project, $data, $idempotencyKey, $requestHash) {
+                    //建立 Notification
+                    $notification = NotificationMessage::create([
+                        'project_id' => $project->id,
+                        'template_id' => null,
+                        'event_type' => $data['event_type'],
+                        'channel' => $data['channel'],
+                        'recipient' => $data['recipient'],
+                        'payload' => $data['data'] ?? null,
+                        'metadata' => null,
+                        'status' => 'pending',
+                        'scheduled_at' => $data['scheduled_at'] ?? null,
+                    ]);
+
+                    //決定 Provider
+                    $provider = match ($notification->channel) {
+                        'email' => 'mock_email',
+                        'webhook' => 'http_webhook',
+                        default => throw new \RuntimeException(
+                            'Unsupported notification channel.'
+                        ),
+                    };
+
+                    //建立 Delivery
+                    $delivery = $notification->deliveries()->create([
+                        'provider' => $provider,
+                        'status' => 'pending',
+                        'attempt_count' => 0,
+                    ]);
+
+
+                    if ($idempotencyKey !== null) {
+                        IdempotencyKey::create([
+                            'project_id' => $project->id,
+                            'idempotency_key' => $idempotencyKey,
+                            'request_hash' => $requestHash,
+                            'notification_id' => $notification->id,
+                            'expires_at' => now()->addDay(),
+                        ]);
+                    }
+
+                    return [
+                        'notification' => $notification,
+                        'delivery' => $delivery,
+                        'replayed' => false,
+                    ];
+                }
+            );
+        } catch (QueryException $e) {
+            if ($idempotencyKey === null || !$this->isUniqueConstraintViolation($e)) {
+                throw $e;
+            }
+
+            $existing = $this->findExisting($project, $idempotencyKey);
+
+            if (!$existing) {
+                throw $e;
+            }
+
+            return $this->resolveExisting($existing, $requestHash);
+        }
+    }
+
+    private function findExisting(Project $project, string $idempotencyKey): ?IdempotencyKey 
+    {
+        return IdempotencyKey::query()
+            ->where('project_id', $project->id)
+            ->where('idempotency_key', $idempotencyKey)
+            ->with([
+                'notification.deliveries',
+            ])
+            ->first();
+    }
+
+    private function resolveExisting(IdempotencyKey $existing, string $requestHash): array 
+    {
+        if ($existing->request_hash !== $requestHash) {
+            throw new ApiClientException(40901);
+        }
+
+        $notification = $existing->notification;
+
+        return [
+            'notification' => $notification,
+            'delivery' => $notification
+                ?->deliveries
+                ->first(),
+            'replayed' => true,
+        ];
+    }
+
+    private function isUniqueConstraintViolation(QueryException $e): bool 
+    {
+        return in_array(
+            $e->getCode(),
+            [
+                '23000',
+                '23505',
+            ],
+            true
+        );
+    }
+}
