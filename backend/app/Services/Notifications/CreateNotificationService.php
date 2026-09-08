@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 
 use App\Exceptions\ApiClientException;
+use App\Jobs\SendNotificationJob;
 use App\Services\Idempotency\RequestHashService;
 
 use App\Models\IdempotencyKey;
@@ -48,7 +49,7 @@ class CreateNotificationService
         }
 
         try {
-            return DB::transaction(
+            $result = DB::transaction(
                 function () use ($project, $data, $idempotencyKey, $requestHash) {
                     //建立 Notification
                     $notification = NotificationMessage::create([
@@ -60,7 +61,7 @@ class CreateNotificationService
                         'payload' => $data['data'] ?? null,
                         'metadata' => null,
                         'status' => 'pending',
-                        'scheduled_at' => $data['scheduled_at'] ?? null,
+                        'scheduled_at' => $data['scheduled_at'] ?? now(),
                     ]);
 
                     //決定 Provider
@@ -97,6 +98,20 @@ class CreateNotificationService
                     ];
                 }
             );
+
+            if (!$result['replayed']) {
+                SendNotificationJob::dispatch($result['notification']->id);
+
+                $result['notification']->update([
+                    'status' => 'queued',
+                ]);
+
+                $result['delivery']->update([
+                    'status' => 'queued',
+                ]);
+            }
+
+            return $result;
         } catch (QueryException $e) {
             if ($idempotencyKey === null || !$this->isUniqueConstraintViolation($e)) {
                 throw $e;
