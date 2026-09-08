@@ -65,8 +65,8 @@ class CreateNotificationService
 
                     //決定 Provider
                     $provider = match ($notification->channel) {
-                        'email' => 'mock_email',
-                        'webhook' => 'http_webhook',
+                        'email' => 'smtp',
+                        'webhook' => 'webhook',
                         default => throw new \RuntimeException(
                             'Unsupported notification channel.'
                         ),
