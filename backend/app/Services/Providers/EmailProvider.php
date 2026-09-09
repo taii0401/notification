@@ -9,33 +9,37 @@ use App\Models\NotificationMessage;
 
 class EmailProvider
 {
-    public function send(
-        NotificationMessage $notification
-    ): array {
-        Log::info('Email notification simulated.', [
-            'notification_id' => $notification->id,
+    public function send(NotificationMessage $notification): array {
+        //測試(不要都是成功，所以有時成功，有時失敗)
+        $mode = config(
+            'services.email_provider.mode',
+            'success'
+        );
+
+        return match ($mode) {
+            'success' => $this->success($notification),
+            'fail' => $this->failure($notification),
+            'random' => $this->random($notification),
+            default => $this->success($notification),
+        };
+    }
+
+    private function success(NotificationMessage $notification): array {
+        Log::info('Email notification simulated success.', [
             'notification_uuid' => $notification->uuid,
             'recipient' => $notification->recipient,
             'event_type' => $notification->event_type,
-            'payload' => $notification->payload,
         ]);
 
         /*
-        |--------------------------------------------------------------------------
-        | 真正發送 Email
-        |--------------------------------------------------------------------------
-        |
-        | 之後要正式寄信時，可以在這裡使用 Laravel Mail：
-        |
-        | Mail::raw(
-        |     '通知內容',
-        |     function ($message) use ($notification) {
-        |         $message
-        |             ->to($notification->recipient)
-        |             ->subject('Notification');
-        |     }
-        | );
-        |
+        Mail::raw(
+            '通知內容',
+            function ($message) use ($notification) {
+                $message
+                    ->to($notification->recipient)
+                    ->subject('Notification');
+            }
+        );
         */
 
         return [
@@ -45,5 +49,29 @@ class EmailProvider
             'error_type' => null,
             'error_message' => null,
         ];
+    }
+
+    private function failure(NotificationMessage $notification): array {
+        Log::warning('Email notification simulated failure.', [
+            'notification_uuid' => $notification->uuid,
+            'recipient' => $notification->recipient,
+            'event_type' => $notification->event_type,
+        ]);
+
+        return [
+            'success' => false,
+            'response_code' => 503,
+            'provider_message_id' => null,
+            'error_type' => 'provider_temporary_error',
+            'error_message' => 'Simulated provider failure.',
+        ];
+    }
+
+    private function random(NotificationMessage $notification): array {
+        $success = random_int(1, 100) <= 20;
+
+        return $success
+            ? $this->success($notification)
+            : $this->failure($notification);
     }
 }

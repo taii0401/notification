@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'email_provider' => [
+        'mode' => env('EMAIL_PROVIDER_MODE', 'success'),
+    ],
+    
 ];
