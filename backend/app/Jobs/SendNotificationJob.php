@@ -5,6 +5,8 @@ namespace App\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
+use App\Services\Providers\EmailProvider;
+
 use App\Models\NotificationMessage;
 
 class SendNotificationJob implements ShouldQueue
@@ -16,7 +18,7 @@ class SendNotificationJob implements ShouldQueue
 
     }
 
-    public function handle(): void
+    public function handle(EmailProvider $emailProvider): void
     {
         $notification = NotificationMessage::findOrFail(
             $this->notificationId
@@ -35,18 +37,71 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        $notification->update([
-            'status' => 'processing',
-            'processed_at' => now(),
-        ]);
+        //更新 Notification
+        $updated = NotificationMessage::query()
+            ->where('id', $this->notificationId)
+            ->where('status', 'queued')
+            ->whereNull('processed_at')
+            ->update([
+                'status' => 'processing',
+                'processed_at' => now(),
+            ]);
 
+        if ($updated === 0) {
+            return;
+        }
+
+        //更新 Delivery
+        $notification = NotificationMessage::with('deliveries')->findOrFail($this->notificationId);
         $delivery = $notification->deliveries->firstOrFail();
         $delivery->update([
             'status' => 'processing',
         ]);
 
-        // 下一步：
-        // Create NotificationAttempt
-        // Call Provider
+        //建立 Attempt
+        $attemptNo = $delivery->attempt_count + 1;
+        $attempt = $delivery->attempts()->create([
+            'attempt_no' => $attemptNo,
+            'status' => 'processing',
+            'request_payload' => [
+                'recipient' => $notification->recipient,
+                'event_type' => $notification->event_type,
+                'payload' => $notification->payload,
+            ],
+        ]);
+        $delivery->increment('attempt_count');
+
+        //Call Provider
+        $result = [];
+        if ($notification->channel == 'email') {
+            $result = $emailProvider->send($notification);
+        }
+
+        
+        //Success
+        if ($result['success']) {
+            $attempt->update([
+                'status' => 'success',
+                'response_code' => $result['response_code'],
+                'finished_at' => now(),
+            ]);
+
+            $delivery->update([
+                'status' => 'sent',
+                'provider_message_id' =>
+                    $result['provider_message_id'],
+                'sent_at' => now(),
+            ]);
+
+            $notification->update([
+                'status' => 'sent',
+                'sent_at' => now(),
+            ]);
+
+            return;
+        }
+
+        //Failure
+        
     }
 }
