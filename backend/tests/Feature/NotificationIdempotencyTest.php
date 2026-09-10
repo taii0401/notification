@@ -2,80 +2,108 @@
 
 namespace Tests\Feature;
 
-use App\Models\Project;
-use App\Exceptions\ApiClientException;
-use App\Services\Notifications\CreateNotificationService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
+
+use App\Models\ApiKey;
+use App\Models\Project;
 
 class NotificationIdempotencyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_same_idempotency_key_and_request_replays_existing_notification(): void
+    private Project $project;
+    private string $plainKey;
+
+    protected function setUp(): void
     {
-        $project = $this->createProject();
-        $service = app(CreateNotificationService::class);
-        $data = $this->notificationData();
+        parent::setUp();
 
-        $first = $service->execute($project, $data, 'notification-request-1');
-        $replayed = $service->execute($project, $data, 'notification-request-1');
+        Queue::fake();
 
-        $this->assertFalse($first['replayed']);
-        $this->assertTrue($replayed['replayed']);
-        $this->assertSame($first['notification']->id, $replayed['notification']->id);
+        $this->project = Project::factory()->create([
+            'status' => 'active',
+        ]);
+
+        $this->plainKey = 'nfs_test_abc123';
+
+        ApiKey::factory()->create([
+            'project_id' => $this->project->id,
+            'name' => 'Testing Key',
+            'key_prefix' => 'nfs_test_',
+            'key_hash' => hash('sha256', $this->plainKey),
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_same_key_and_same_payload_returns_existing_notification(): void
+    {
+        $payload = [
+            'event_type' => 'order.paid',
+            'channel' => 'email',
+            'recipient' => 'customer@example.com',
+            'data' => [
+                'order_no' => 'ORD-001',
+                'amount' => 1280,
+            ],
+        ];
+
+        $headers = [
+            'Idempotency-Key' => 'order-001-paid',
+        ];
+
+        $this
+            ->withHeaders($headers)
+            ->withToken($this->plainKey)
+            ->postJson('/api/notifications', $payload)
+            ->assertCreated();
+
+        $this
+            ->withHeaders($headers)
+            ->withToken($this->plainKey)
+            ->postJson('/api/notifications', $payload)
+            ->assertOk();
+
         $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('notification_deliveries', 1);
         $this->assertDatabaseCount('idempotency_keys', 1);
     }
 
-    public function test_same_idempotency_key_with_different_request_is_rejected(): void
+    public function test_same_key_with_different_payload_returns_conflict(): void
     {
-        $project = $this->createProject();
-        $service = app(CreateNotificationService::class);
-
-        $service->execute(
-            $project,
-            $this->notificationData(),
-            'notification-request-2'
-        );
-
-        $this->expectException(ConflictHttpException::class);
-        $this->expectExceptionMessage(
-            'Idempotency key has already been used with a different request.'
-        );
-
-        $service->execute(
-            $project,
-            $this->notificationData('another@example.com'),
-            'notification-request-2'
-        );
-    }
-
-    private function createProject(): Project
-    {
-        return Project::create([
-            'name' => 'Test Project',
-            'slug' => 'test-project',
-            'status' => 'active',
-        ]);
-    }
-
-    /** @return array<string, mixed> */
-    private function notificationData(
-        string $recipient = 'customer@example.com'
-    ): array {
-        return [
-            'event_type' => 'order.created',
-            'channel' => 'email',
-            'recipient' => $recipient,
-            'template' => null,
-            'data' => [
-                'order_id' => 123,
-                'customer' => 'Taylor',
-            ],
-            'scheduled_at' => null,
+        $headers = [
+            'Idempotency-Key' => 'order-001-paid',
         ];
+
+        $this
+            ->withHeaders($headers)
+            ->withToken($this->plainKey)
+            ->postJson('/api/notifications', [
+                'event_type' => 'order.paid',
+                'channel' => 'email',
+                'recipient' => 'customer@example.com',
+                'data' => [
+                    'order_no' => 'ORD-001',
+                    'amount' => 1280,
+                ],
+            ])
+            ->assertCreated();
+
+        $this
+            ->withHeaders($headers)
+            ->withToken($this->plainKey)
+            ->postJson('/api/notifications', [
+                'event_type' => 'order.paid',
+                'channel' => 'email',
+                'recipient' => 'customer@example.com',
+                'data' => [
+                    'order_no' => 'ORD-001',
+                    'amount' => 9999,
+                ],
+            ])
+            ->assertStatus(409);
+
+        $this->assertDatabaseCount('notifications', 1);
     }
 }
