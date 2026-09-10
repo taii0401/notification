@@ -84,7 +84,7 @@ class ApiKeyController extends Controller
      */
     public function show(Project $project, ApiKey $apiKey): JsonResponse 
     {
-        $this->ensureApiKeyBelongsToProject($project,$apiKey);
+        $this->ensureApiKeyBelongsToProject($project, $apiKey);
 
         return response()->json([
             'data' => [
@@ -124,7 +124,9 @@ class ApiKeyController extends Controller
             $apiKey->delete();
         });
 
-        throw new ApiClientException(40501);
+        return response()->json([
+            'message' => 'API Key deleted successfully.',
+        ]);
     }
 
     /**
@@ -132,8 +134,9 @@ class ApiKeyController extends Controller
      */
     private function ensureApiKeyBelongsToProject(Project $project, ApiKey $apiKey): void 
     {
-        if ($apiKey->project_id !== $project->id) {
-            throw new ApiClientException(40401);
-        }
+        abort_unless(
+            $apiKey->project_id === $project->id,
+            404
+        );
     }
 }

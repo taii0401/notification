@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Exceptions\ApiClientException;
 use App\Services\Notifications\CreateNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
 class NotificationIdempotencyTest extends TestCase
@@ -40,7 +41,7 @@ class NotificationIdempotencyTest extends TestCase
             'notification-request-2'
         );
 
-        $this->expectException(ApiClientException::class);
+        $this->expectException(ConflictHttpException::class);
         $this->expectExceptionMessage(
             'Idempotency key has already been used with a different request.'
         );

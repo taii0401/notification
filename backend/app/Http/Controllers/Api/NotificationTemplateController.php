@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreNotificationTemplateRequest;
-use App\Http\Requests\UpdateNotificationTemplateRequest;
-use App\Models\NotificationTemplate;
-use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+use App\Http\Requests\StoreNotificationTemplateRequest;
+use App\Http\Requests\UpdateNotificationTemplateRequest;
+
+use App\Http\Controllers\Controller;
+use App\Models\NotificationTemplate;
+use App\Models\Project;
 
 class NotificationTemplateController extends Controller
 {
@@ -69,6 +71,8 @@ class NotificationTemplateController extends Controller
 
     public function show(Project $project, NotificationTemplate $notificationTemplate): JsonResponse 
     {
+        $this->ensureTemplateBelongsToProject($project, $notificationTemplate);
+
         return response()->json([
             'data' => $notificationTemplate,
         ]);
@@ -76,6 +80,8 @@ class NotificationTemplateController extends Controller
 
     public function update(UpdateNotificationTemplateRequest $request, Project $project, NotificationTemplate $notificationTemplate): JsonResponse 
     {
+        $this->ensureTemplateBelongsToProject($project, $notificationTemplate);
+
         $notificationTemplate->update(
             $request->validated()
         );
@@ -89,6 +95,8 @@ class NotificationTemplateController extends Controller
 
     public function destroy(Project $project, NotificationTemplate $notificationTemplate): JsonResponse 
     {
+        $this->ensureTemplateBelongsToProject($project, $notificationTemplate);
+
         $notificationTemplate->update([
             'status' => 'inactive',
         ]);
@@ -97,5 +105,16 @@ class NotificationTemplateController extends Controller
         return response()->json([
             'message' => 'Notification template deleted successfully.',
         ]);
+    }
+
+    /**
+     * 確認 Template 屬於指定 Project。
+     */
+    private function ensureTemplateBelongsToProject(Project $project, NotificationTemplate $notificationTemplate): void
+    {
+        abort_unless(
+            $notificationTemplate->project_id === $project->id,
+            404
+        );
     }
 }

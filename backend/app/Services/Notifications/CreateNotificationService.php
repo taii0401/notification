@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use App\Exceptions\ApiClientException;
@@ -158,7 +159,9 @@ class CreateNotificationService
     private function resolveExisting(IdempotencyKey $existing, string $requestHash): array 
     {
         if ($existing->request_hash !== $requestHash) {
-            throw new ApiClientException(40901);
+            throw new ConflictHttpException(
+                'Idempotency key has already been used with a different request.'
+            );
         }
 
         $notification = $existing->notification;
