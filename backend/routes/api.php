@@ -22,6 +22,8 @@ Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->exce
 Route::apiResource('projects/{project}/notification-templates', NotificationTemplateController::class);
 //通知
 Route::middleware('api.key')->group(function () {
+    Route::get('notifications', [NotificationController::class,'index']);
+    Route::get('notifications/{notification}', [NotificationController::class,'show']);
     //傳送通知
     Route::post('notifications', [NotificationController::class,'store']);
 });
