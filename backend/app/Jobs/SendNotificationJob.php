@@ -49,7 +49,7 @@ class SendNotificationJob implements ShouldQueue
         }
 
         //processed_at 只記錄「第一次開始處理」的時間
-        $notification = NotificationMessage::with('deliveries')->findOrFail($this->notificationId);
+        $notification = NotificationMessage::with('template', 'deliveries')->findOrFail($this->notificationId);
         if ($notification->processed_at === null) {
             $notification->update([
                 'processed_at' => now(),

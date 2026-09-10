@@ -5,10 +5,17 @@ namespace App\Services\Providers;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+use App\Services\Templates\TemplateRenderer;
+
 use App\Models\NotificationMessage;
 
 class EmailProvider
 {
+    public function __construct(private TemplateRenderer $renderer) 
+    {
+
+    }
+
     public function send(NotificationMessage $notification): array {
         //測試(不要都是成功，所以有時成功，有時失敗)
         $mode = config(
@@ -24,20 +31,48 @@ class EmailProvider
         };
     }
 
-    private function success(NotificationMessage $notification): array {
-        Log::info('Email notification simulated success.', [
-            'notification_uuid' => $notification->uuid,
-            'recipient' => $notification->recipient,
-            'event_type' => $notification->event_type,
-        ]);
+    private function success(NotificationMessage $notification): array 
+    {
+        $template = $notification->template;
+
+        if (!$template) {
+            return [
+                'success' => false,
+                'response_code' => 400,
+                'provider_message_id' => null,
+                'error_type' => 'template_not_found',
+                'error_message' => 'Notification template is missing.',
+            ];
+        }
+
+        $payload = $notification->payload ?? [];
+
+        $subject = $this->renderer->render(
+            $template->subject ?? '',
+            $payload
+        );
+
+        $content = $this->renderer->render(
+            $template->content,
+            $payload
+        );
+
+        Log::info(
+            'Email notification simulated.',
+            [
+                'notification_uuid' => $notification->uuid,
+                'recipient' => $notification->recipient,
+                'template_code' => $template->code,
+                'subject' => $subject,
+                'content' => $content,
+            ]
+        );
 
         /*
         Mail::raw(
-            '通知內容',
-            function ($message) use ($notification) {
-                $message
-                    ->to($notification->recipient)
-                    ->subject('Notification');
+            $content,
+            function ($message) use ($notification, $subject) {
+                $message->to($notification->recipient)->subject($subject);
             }
         );
         */
@@ -68,7 +103,7 @@ class EmailProvider
     }
 
     private function random(NotificationMessage $notification): array {
-        $success = random_int(1, 100) <= 20;
+        $success = random_int(1, 100) <= 60;
 
         return $success
             ? $this->success($notification)

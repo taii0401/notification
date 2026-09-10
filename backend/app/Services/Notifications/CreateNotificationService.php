@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use App\Exceptions\ApiClientException;
 use App\Jobs\SendNotificationJob;
@@ -22,6 +23,22 @@ class CreateNotificationService
 
     public function execute(Project $project, array $data, ?string $idempotencyKey = null): array 
     {
+        $template = null;
+        if (!empty($data['template'])) {
+            $template = $project
+                ->notificationTemplates()
+                ->where('code', $data['template'])
+                ->where('channel', $data['channel'])
+                ->where('status', 'active')
+                ->first();
+
+            if (!$template) {
+                throw new NotFoundHttpException(
+                    'Notification template not found.'
+                );
+            }
+        }
+
         $requestHash = null;
 
         if ($idempotencyKey !== null && trim($idempotencyKey) === '') {
@@ -50,11 +67,11 @@ class CreateNotificationService
 
         try {
             $result = DB::transaction(
-                function () use ($project, $data, $idempotencyKey, $requestHash) {
+                function () use ($project, $template, $data, $idempotencyKey, $requestHash) {
                     //建立 Notification
                     $notification = NotificationMessage::create([
                         'project_id' => $project->id,
-                        'template_id' => null,
+                        'template_id' => $template->id,
                         'event_type' => $data['event_type'],
                         'channel' => $data['channel'],
                         'recipient' => $data['recipient'],
