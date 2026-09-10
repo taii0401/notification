@@ -8,7 +8,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-use App\Services\Providers\EmailProvider;
+use App\Services\Delivery\EmailProvider;
+use App\Services\Delivery\WebhookProvider;
 
 use App\Models\NotificationMessage;
 
@@ -34,7 +35,7 @@ class SendNotificationJob implements ShouldQueue
 
     }
 
-    public function handle(EmailProvider $emailProvider): void
+    public function handle(EmailProvider $emailProvider, WebhookProvider $webhookProvider): void
     {
         //只有 queued 才能進入 Job
         $updated = NotificationMessage::query()
@@ -79,16 +80,18 @@ class SendNotificationJob implements ShouldQueue
 
         //Call Provider
         $result = [];
-        if ($notification->channel == 'email') {
-            $result = $emailProvider->send($notification);
-        }
+        $result = match ($notification->channel) {
+            'email' => $emailProvider->send($notification),
+            'webhook' => $webhookProvider->send($notification),
+            default => [],
+        };
 
-        
         //Success
         if ($result['success'] === true) {
             $attempt->update([
                 'status' => 'success',
                 'response_code' => $result['response_code'] ?? 200,
+                'response_body' => $result['response_body'] ?? null,
                 'finished_at' => now(),
             ]);
 
@@ -122,11 +125,13 @@ class SendNotificationJob implements ShouldQueue
 
         //Failure
         $responseCode = $result['response_code'] ?? null;
+        $responseBody = $result['response_body'] ?? null;
         $errorType = $result['error_type'] ?? 'provider_error';
         $errorMessage = $result['error_message'] ?? 'Notification delivery failed.';
         $attempt->update([
             'status' => 'failed',
             'response_code' => $responseCode,
+            'response_body' => $responseBody,
             'error_type' => $errorType,
             'error_message' => $errorMessage,
             'finished_at' => now(),
@@ -151,6 +156,7 @@ class SendNotificationJob implements ShouldQueue
                 'delivery_id' => $delivery->id,
                 'attempt_no' => $attemptNo,
                 'response_code' => $responseCode,
+                'response_body' => $responseBody,
                 'error_type' => $errorType,
                 'error_message' => $errorMessage,
             ]
@@ -174,6 +180,7 @@ class SendNotificationJob implements ShouldQueue
                 'attempt_no' => $attemptNo,
                 'job_attempt' => $this->attempts(), //Queue 自己的 Job attempt 次數
                 'response_code' => $responseCode,
+                'response_body' => $responseBody,
                 'error_message' => $errorMessage,
             ]
         );

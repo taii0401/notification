@@ -71,7 +71,7 @@ class CreateNotificationService
                     //建立 Notification
                     $notification = NotificationMessage::create([
                         'project_id' => $project->id,
-                        'template_id' => $template->id,
+                        'template_id' => $template?->id,
                         'event_type' => $data['event_type'],
                         'channel' => $data['channel'],
                         'recipient' => $data['recipient'],

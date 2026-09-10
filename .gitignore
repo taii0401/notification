@@ -3,3 +3,4 @@
 
 # Environment files
 .env
+mock-receiver/node_modules/

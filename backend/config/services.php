@@ -39,4 +39,8 @@ return [
         'mode' => env('EMAIL_PROVIDER_MODE', 'success'),
     ],
     
+    'webhook' => [
+        'connect_timeout' => env('WEBHOOK_CONNECT_TIMEOUT', 2),
+        'timeout' => env('WEBHOOK_TIMEOUT', 5),
+    ],
 ];

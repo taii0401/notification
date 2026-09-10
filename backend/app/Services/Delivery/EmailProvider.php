@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Providers;
+namespace App\Services\Delivery;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
