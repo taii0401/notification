@@ -1,0 +1,69 @@
+services:
+  backend:
+    image: taii0401/notification-php:8.4
+    working_dir: /var/www/html
+    env_file:
+      - ./backend/.env.docker
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    image: taii0401/notification-php:8.4
+    working_dir: /var/www/html
+    command: php artisan queue:work --tries=4 --timeout=90
+    env_file:
+      - ./backend/.env.docker
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8010:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: notification
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mock-receiver:
+    image: node:24-alpine
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    volumes:
+      - ./mock-receiver:/app
+    ports:
+      - "9000:9000"
+
+volumes:
+  mysql-data:
