@@ -6,6 +6,7 @@ services:
       - ./backend/.env.docker
     volumes:
       - ./backend:/var/www/html
+      - backend_vendor:/var/www/html/vendor
     depends_on:
       mysql:
         condition: service_healthy
@@ -67,3 +68,4 @@ services:
 
 volumes:
   mysql-data:
+  backend_vendor:
