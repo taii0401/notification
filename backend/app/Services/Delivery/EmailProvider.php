@@ -103,7 +103,7 @@ class EmailProvider
     }
 
     private function random(NotificationMessage $notification): array {
-        $success = random_int(1, 100) <= 60;
+        $success = random_int(1, 100) <= 20;
 
         return $success
             ? $this->success($notification)
