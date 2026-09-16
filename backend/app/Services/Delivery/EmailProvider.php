@@ -104,7 +104,7 @@ class EmailProvider
 
     private function random(NotificationMessage $notification): array {
         $number = random_int(1, 100);
-        $success = $number <= 20;
+        $success = $number <= 60;
 
         logger()->info('EmailProvider random test', [
             'number' => $number,
