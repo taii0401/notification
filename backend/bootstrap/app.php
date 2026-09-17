@@ -1,12 +1,15 @@
 <?php
 
+use App\Exceptions\ApiClientException;
+use App\Http\Middleware\AuthenticateApiKey;
+use App\Support\SystemCode;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-
-use App\Exceptions\ApiClientException;
-use App\Http\Middleware\AuthenticateApiKey;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,17 +29,40 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $exceptions->render(
-            function (
-                ApiClientException $exception,
-                Request $request
-            ) {
+            function (Throwable $exception, Request $request) {
                 if (! $request->is('api/*')) {
                     return null;
                 }
 
-                return response()->json([
-                    'message' => $exception->getMessage(),
-                ], $exception->httpStatus);
+                $systemCode = match (true) {
+                    $exception instanceof ApiClientException => $exception->systemCode,
+                    $exception instanceof ValidationException => SystemCode::VALIDATION_FAILED,
+                    $exception instanceof NotFoundHttpException => SystemCode::RESOURCE_NOT_FOUND,
+                    $exception instanceof MethodNotAllowedHttpException => SystemCode::METHOD_NOT_ALLOWED,
+                    default => null,
+                };
+
+                if ($systemCode === null) {
+                    return null;
+                }
+
+                $definition = SystemCode::definition($systemCode);
+
+                $body = [
+                    'message' => $definition['message'],
+                ];
+
+                if (
+                    $exception instanceof ValidationException
+                    || $exception instanceof ApiClientException
+                ) {
+                    $body['errors'] = $exception->errors();
+                }
+
+                return response()->json(
+                    $body,
+                    $definition['http_status']
+                );
             }
         );
 
