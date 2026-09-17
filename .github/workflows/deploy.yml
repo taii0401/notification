@@ -7,84 +7,128 @@ on:
 
 jobs:
 
+  # ============================================================
+  # CI：執行 Laravel Automated Tests
+  # ============================================================
   test:
-  name: Run Tests
-  runs-on: ubuntu-latest
+    name: Run Tests
+    runs-on: ubuntu-latest
 
-  services:
-    mysql:
-      image: mysql:8.4
+    # GitHub Actions 測試專用 MySQL
+    # Workflow 結束後這個 Container 會自動被刪除
+    services:
+      mysql:
+        image: mysql:8.4
 
-      env:
-        MYSQL_DATABASE: notification_test
-        MYSQL_ROOT_PASSWORD: root
+        env:
+          MYSQL_DATABASE: notification_test
+          MYSQL_ROOT_PASSWORD: root
 
-      ports:
-        - 3306:3306
+        ports:
+          - 3306:3306
 
-      options: >-
-        --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
-        --health-interval=10s
-        --health-timeout=5s
-        --health-retries=10
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
-  defaults:
-    run:
-      working-directory: backend
+    defaults:
+      run:
+        working-directory: backend
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+    steps:
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.4'
-        extensions: mbstring, pdo_mysql
-        coverage: none
+      # ----------------------------------------------------------
+      # 1. Checkout Source Code
+      # ----------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Install Composer dependencies
-      run: composer install --prefer-dist --no-progress
+      # ----------------------------------------------------------
+      # 2. Setup PHP
+      # ----------------------------------------------------------
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql
+          coverage: none
 
-    - name: Prepare Laravel
-      run: |
-        cp .env.example .env
-        php artisan key:generate
+      # ----------------------------------------------------------
+      # 3. Install Composer Dependencies
+      # ----------------------------------------------------------
+      - name: Install Composer dependencies
+        run: |
+          composer install \
+            --prefer-dist \
+            --no-progress \
+            --no-interaction
 
-    - name: Run tests
-      env:
-        APP_ENV: testing
+      # ----------------------------------------------------------
+      # 4. Prepare Laravel
+      # ----------------------------------------------------------
+      - name: Prepare Laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate
 
-        DB_CONNECTION: mysql
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
-        DB_DATABASE: notification_test
-        DB_USERNAME: root
-        DB_PASSWORD: root
+      # ----------------------------------------------------------
+      # 5. Run Automated Tests
+      #
+      # 注意：
+      # 這裡使用 GitHub Actions 的 MySQL Container，
+      # 不會連線 AWS Production RDS。
+      # ----------------------------------------------------------
+      - name: Run tests
+        env:
+          APP_ENV: testing
 
-        CACHE_STORE: array
-        SESSION_DRIVER: array
-        QUEUE_CONNECTION: sync
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: notification_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
 
-      run: php artisan test
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+
+        run: php artisan test
 
 
+  # ============================================================
+  # CD：CI 成功後部署到 AWS EC2
+  # ============================================================
   deploy:
     name: Deploy to EC2
+    runs-on: ubuntu-latest
 
+    # test 必須成功，才允許 deploy
     needs:
       - test
 
-    runs-on: ubuntu-latest
-
     steps:
+
+      # ----------------------------------------------------------
+      # 1. Configure SSH
+      # ----------------------------------------------------------
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/notification_deploy
-          chmod 600 ~/.ssh/notification_deploy
-          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
+          echo "${{ secrets.EC2_SSH_KEY }}" \
+            > ~/.ssh/notification_deploy
+
+          chmod 600 ~/.ssh/notification_deploy
+
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" \
+            >> ~/.ssh/known_hosts
+
+      # ----------------------------------------------------------
+      # 2. Deploy to EC2
+      # ----------------------------------------------------------
       - name: Deploy
         run: |
           ssh \
