@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Enums\NotificationStatus;
+
 #[Fillable([
     'uuid',
     'project_id',
@@ -45,6 +47,7 @@ class NotificationMessage extends Model
     protected function casts(): array
     {
         return [
+            'status' => NotificationStatus::class,
             'payload' => 'array',
             'metadata' => 'array',
             'scheduled_at' => 'datetime',

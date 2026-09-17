@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use App\Services\Delivery\EmailProvider;
 use App\Services\Delivery\WebhookProvider;
 
+use App\Enums\NotificationStatus;
+
 use App\Models\NotificationMessage;
 
 class SendNotificationJob implements ShouldQueue
@@ -96,14 +98,14 @@ class SendNotificationJob implements ShouldQueue
             ]);
 
             $delivery->update([
-                'status' => 'sent',
+                'status' => NotificationStatus::SENT,
                 'provider_message_id' => $result['provider_message_id'] ?? null,
                 'last_error' => null,
                 'sent_at' => now(),
             ]);
 
             $notification->update([
-                'status' => 'sent',
+                'status' => NotificationStatus::SENT,
                 'sent_at' => now(),
                 'failed_at' => null, //最後成功時 failed_at 應保持 NULL
             ]);

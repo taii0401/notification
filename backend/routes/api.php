@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationTemplateController;
+use App\Http\Controllers\Api\DashboardStatsController;
 
 /* apiResource會自動建立
     GET     /api/projects               index()
@@ -22,8 +23,13 @@ Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->exce
 Route::apiResource('projects/{project}/notification-templates', NotificationTemplateController::class);
 //通知
 Route::middleware('api.key')->group(function () {
-    Route::get('notifications', [NotificationController::class,'index']);
-    Route::get('notifications/{notification}', [NotificationController::class,'show']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/{notification}', [NotificationController::class, 'show']);
     //傳送通知
-    Route::post('notifications', [NotificationController::class,'store']);
+    Route::post('notifications', [NotificationController::class, 'store']);
+    //重新發送
+    Route::post('notifications/{notification}/retry', [NotificationController::class, 'retry']);
+
+    //Dashboard
+    Route::get('dashboard', [DashboardStatsController::class, 'index']);
 });

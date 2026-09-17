@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+use App\Enums\NotificationStatus;
+
 use App\Models\ApiKey;
 use App\Models\NotificationMessage;
 use App\Models\Project;
@@ -79,12 +81,12 @@ class NotificationQueryTest extends TestCase
     {
         NotificationMessage::factory()->create([
             'project_id' => $this->project->id,
-            'status' => 'sent',
+            'status' => NotificationStatus::SENT,
         ]);
 
         NotificationMessage::factory()->create([
             'project_id' => $this->project->id,
-            'status' => 'failed',
+            'status' => NotificationStatus::FAILED,
         ]);
 
         $response = $this

@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
-
+use App\Enums\NotificationStatus;
 use App\Models\NotificationMessage;
 use App\Models\Project;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<NotificationMessage>
@@ -29,7 +29,42 @@ class NotificationMessageFactory extends Factory
             'payload' => [
                 'order_no' => 'ORD-001',
             ],
-            'status' => 'queued',
+            'status' => NotificationStatus::QUEUED,
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(fn () => [
+            'status' => NotificationStatus::PENDING,
+        ]);
+    }
+
+    public function queued(): static
+    {
+        return $this->state(fn () => [
+            'status' => NotificationStatus::QUEUED,
+        ]);
+    }
+
+    public function processing(): static
+    {
+        return $this->state(fn () => [
+            'status' => NotificationStatus::PROCESSING,
+        ]);
+    }
+
+    public function sent(): static
+    {
+        return $this->state(fn () => [
+            'status' => NotificationStatus::SENT,
+        ]);
+    }
+
+    public function failed(): static
+    {
+        return $this->state(fn () => [
+            'status' => NotificationStatus::FAILED,
+        ]);
     }
 }
