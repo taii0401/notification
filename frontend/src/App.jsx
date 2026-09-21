@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 
 import AppLayout from './components/layout/AppLayout';
+import ApiKeysPage from './pages/ApiKeysPage';
 import DashboardPage from './pages/DashboardPage';
 
 export default function App() {
@@ -16,6 +17,10 @@ export default function App() {
                     <Route
                         path="/projects/:uuid"
                         element={<DashboardPage />}
+                    />
+                    <Route
+                        path="/projects/:uuid/api-keys"
+                        element={<ApiKeysPage />}
                     />
                 </Route>
             </Routes>

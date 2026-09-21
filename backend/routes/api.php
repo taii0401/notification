@@ -18,7 +18,9 @@ use App\Http\Controllers\Api\DashboardStatsController;
 //專案
 Route::apiResource('projects', ProjectController::class);
 //API Key(不可更新)
-Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->except(['update']); 
+Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->except(['update']);
+//API Key-重新產生 Key
+Route::post('projects/{project}/api-keys/{apiKey}/regenerate', [ApiKeyController::class, 'regenerate']); 
 //Templates
 Route::apiResource('projects/{project}/notification-templates', NotificationTemplateController::class);
 //通知

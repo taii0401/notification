@@ -19,22 +19,47 @@ class ApiKeyController extends Controller
     /**
      * 取得 Project 的 API Key 列表。
      */
-    public function index(Project $project): JsonResponse
+    public function index(Request $request, Project $project): JsonResponse
     {
-        $apiKeys = $project->apiKeys()
-            ->latest()
-            ->get([
-                'id',
-                'name',
-                'key_prefix',
-                'status',
-                'last_used_at',
-                'expires_at',
-                'created_at',
-            ]);
+        $query = $project->apiKeys();
+
+        if ($request->filled('keyword')) {
+            $keyword = trim(
+                $request->string('keyword')->toString()
+            );
+
+            $query->where('name', 'like', "%{$keyword}%");
+        }
+
+        $apiKeys = $query->latest()->paginate(10);
+
+        $data = $apiKeys
+            ->getCollection()
+            ->map(function (ApiKey $apiKey) {
+                return [
+                    'id' => $apiKey->id,
+                    'name' => $apiKey->name,
+                    'key_prefix' => $apiKey->key_prefix,
+                    'status' => $apiKey->status,
+                    'last_used_at' => $apiKey->last_used_at,
+                    'expires_at' => $apiKey->expires_at,
+                    'created_at' => $apiKey->created_at,
+                    'created_at_display' => $apiKey->created_at
+                        ?->timezone(config('app.timezone'))
+                        ->format('Y/m/d H:i:s'),
+                ];
+            });
 
         return response()->json([
-            'data' => $apiKeys,
+            'data' => $data,
+            'meta' => [
+                'current_page' => $apiKeys->currentPage(),
+                'per_page' => $apiKeys->perPage(),
+                'total' => $apiKeys->total(),
+                'last_page' => $apiKeys->lastPage(),
+                'from' => $apiKeys->firstItem(),
+                'to' => $apiKeys->lastItem(),
+            ],
         ]);
     }
 
@@ -126,6 +151,42 @@ class ApiKeyController extends Controller
 
         return response()->json([
             'message' => 'API Key deleted successfully.',
+        ]);
+    }
+
+    //重新產生 API Key
+    public function regenerate(Project $project, ApiKey $apiKey): JsonResponse 
+    {
+        $this->ensureApiKeyBelongsToProject($project, $apiKey);
+
+        $plainTextKey = DB::transaction(function () use ($project, $apiKey) {
+            $prefix = str_replace('-', '_', $project->slug) . '_';
+            $secret = Str::random(48);
+            $plainTextKey = $prefix . $secret;
+
+            $apiKey->update([
+                'key_prefix' => $prefix,
+                'key_hash' => hash('sha256', $plainTextKey),
+                'status' => 'active',
+                'last_used_at' => null,
+            ]);
+
+            return $plainTextKey;
+        });
+
+        return response()->json([
+            'message' => 'API Key regenerated successfully.',
+            'data' => [
+                'id' => $apiKey->id,
+                'name' => $apiKey->name,
+                'key_prefix' => $apiKey->key_prefix,
+                'api_key' => $plainTextKey,
+                'status' => $apiKey->status,
+                'regenerated_at_display' => now()
+                    ->timezone(config('app.timezone'))
+                    ->format('Y/m/d H:i:s'),
+            ],
+            'warning' => 'The previous API Key is now invalid. This new API Key will only be displayed once.',
         ]);
     }
 

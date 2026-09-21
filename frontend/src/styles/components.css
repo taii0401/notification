@@ -475,3 +475,319 @@
     color: #8b6b35;
     background: #f5eedf;
 }
+
+
+/* ========================================
+   Table
+======================================== */
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.table-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 72px;
+    padding: 7px 12px;
+
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease,
+        transform 150ms ease;
+}
+
+.table-action-button:hover {
+    transform: translateY(-1px);
+}
+
+.table-action-button:focus-visible {
+    outline: 3px solid rgba(78, 112, 149, 0.25);
+    outline-offset: 2px;
+}
+
+.table-action-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.copy-button {
+    color: #3f5f7f;
+    background: #eef4fa;
+    border-color: #d5e1ec;
+}
+
+.copy-button:hover {
+    color: #ffffff;
+    background: #526d89;
+    border-color: #526d89;
+}
+
+.delete-button {
+    color: #b42318;
+    background: #fff4f2;
+    border-color: #ffd5d0;
+}
+
+.delete-button:hover {
+    color: #ffffff;
+    background: #c43227;
+    border-color: #c43227;
+}
+
+.regenerate-button {
+    color: #3f5f7f;
+    background: #eef4fa;
+    border-color: #d5e1ec;
+}
+
+.regenerate-button:hover:not(:disabled) {
+    color: #ffffff;
+    background: #526d89;
+    border-color: #526d89;
+}
+
+.regenerated-key-value {
+    display: block;
+    overflow-wrap: anywhere;
+    margin: 18px 0;
+    padding: 14px 16px;
+    color: var(--color-text-primary);
+    background: var(--color-page-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    line-height: 1.6;
+    user-select: all;
+}
+
+
+/* ========================================
+   Modal
+======================================== */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(24, 35, 48, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.modal {
+    width: min(560px, 100%);
+    padding: 28px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(24, 35, 48, 0.22);
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 20px;
+}
+
+.modal-body {
+    margin-top: 18px;
+}
+
+.modal-body p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.modal .modal-warning {
+    padding: 10px 12px;
+    color: #8b5e16;
+    background: #fff8e7;
+    border-radius: 8px;
+}
+
+.modal .modal-error {
+    color: #b42318;
+}
+
+/* ========================================
+   Shared List Controls
+======================================== */
+
+.list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.list-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.list-search input {
+    width: min(320px, 45vw);
+    padding: 9px 12px;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.list-search input:focus {
+    border-color: var(--color-primary);
+    outline: 3px solid rgba(80, 105, 131, 0.15);
+}
+
+.text-button {
+    padding: 8px;
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.text-button:hover {
+    color: var(--color-primary);
+}
+
+.list-card {
+    overflow: hidden;
+}
+
+.list-state {
+    padding: 28px;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.api-key-prefix {
+    color: var(--color-text-primary);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.api-keys-page .notification-table th,
+.api-keys-page .notification-table td {
+    text-align: center;
+}
+
+.api-keys-page .table-actions {
+    justify-content: center;
+}
+
+.list-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 14px 20px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.pagination-summary {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.pagination-link {
+    padding: 0;
+    color: var(--color-primary);
+    background: transparent;
+    border: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pagination-link:hover:not(:disabled) {
+    color: var(--color-accent-dark);
+    text-decoration: underline;
+}
+
+.pagination-link:disabled,
+.modal-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   Shared Form Fields
+======================================== */
+
+.form-field {
+    display: grid;
+    gap: 7px;
+    margin-bottom: 16px;
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.form-field input {
+    width: 100%;
+    padding: 10px 12px;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-weight: 400;
+}
+
+.form-field input:focus {
+    border-color: var(--color-primary);
+    outline: 3px solid rgba(80, 105, 131, 0.15);
+}
+
+.field-error {
+    color: var(--color-danger);
+    font-weight: 400;
+}
+
+@media (max-width: 720px) {
+    .list-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .list-pagination {
+        flex-wrap: wrap;
+    }
+
+    .list-search {
+        flex-wrap: wrap;
+    }
+
+    .list-search input {
+        width: 100%;
+    }
+}
+
+
+
+

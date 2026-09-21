@@ -1,4 +1,8 @@
+import { NavLink, useParams } from 'react-router-dom';
+
 export default function Sidebar() {
+    const { uuid } = useParams();
+
     return (
         <aside className="sidebar">
             <div className="sidebar-brand">
@@ -10,30 +14,54 @@ export default function Sidebar() {
 
                 <div className="sidebar-brand-text">
                     <strong>Glidery Studio</strong>
-                    <span>Notification</span>
                 </div>
             </div>
 
             <nav className="sidebar-nav">
-                <a className="nav-item active" href="#">
+                <NavLink
+                    to={`/projects/${uuid}`}
+                    end
+                    className={({ isActive }) =>
+                        isActive
+                            ? 'nav-item active'
+                            : 'nav-item'
+                    }
+                >
                     Dashboard
-                </a>
+                </NavLink>
 
-                <a className="nav-item" href="#">
+                <NavLink
+                    to={`/projects/${uuid}/notifications`}
+                    className={({ isActive }) =>
+                        isActive
+                            ? 'nav-item active'
+                            : 'nav-item'
+                    }
+                >
                     Notifications
-                </a>
+                </NavLink>                
 
-                <a className="nav-item" href="#">
-                    Templates
-                </a>
-
-                <a className="nav-item" href="#">
+                <NavLink
+                    to={`/projects/${uuid}/api-keys`}
+                    className={({ isActive }) =>
+                        isActive
+                            ? 'nav-item active'
+                            : 'nav-item'
+                    }
+                >
                     API Keys
-                </a>
+                </NavLink>
 
-                <a className="nav-item" href="#">
-                    Projects
-                </a>
+                <NavLink
+                    to={`/projects/${uuid}/templates`}
+                    className={({ isActive }) =>
+                        isActive
+                            ? 'nav-item active'
+                            : 'nav-item'
+                    }
+                >
+                    Templates
+                </NavLink>
             </nav>
         </aside>
     );
