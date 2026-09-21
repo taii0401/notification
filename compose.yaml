@@ -1,4 +1,20 @@
 services:
+  frontend:
+    image: node:24-alpine
+    container_name: notification-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    command: >
+      sh -c "
+        npm install &&
+        npm run dev -- --host 0.0.0.0
+      "
+    restart: unless-stopped
+
   backend:
     image: taii0401/notification-php:8.4
     working_dir: /var/www/html
@@ -68,4 +84,6 @@ services:
 
 volumes:
   mysql-data:
+  redis-data:
   backend_vendor:
+  frontend-node-modules:
