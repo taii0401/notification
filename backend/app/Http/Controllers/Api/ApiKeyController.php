@@ -23,6 +23,10 @@ class ApiKeyController extends Controller
     {
         $query = $project->apiKeys();
 
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        
         if ($request->filled('keyword')) {
             $keyword = trim(
                 $request->string('keyword')->toString()

@@ -2,13 +2,14 @@ import apiClient from './client';
 
 export async function getApiKeys(
     projectUuid,
-    { keyword = '', page = 1 } = {}
+    { keyword = '', status = '', page = 1 } = {}
 ) {
     const response = await apiClient.get(
         `/projects/${projectUuid}/api-keys`,
         {
             params: {
                 keyword: keyword || undefined,
+                status: status || undefined,
                 page,
             },
         }

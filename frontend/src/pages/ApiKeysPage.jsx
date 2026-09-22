@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 
 import Modal from '../components/ui/Modal';
 import Pagination from '../components/ui/Pagination';
+import CustomSelect from '../components/ui/CustomSelect';
 import {
     createApiKey,
     deleteApiKey,
@@ -19,6 +20,12 @@ const initialPagination = {
     to: null,
 };
 
+function getDefaultExpiresAt() {
+    const currentYear = new Date().getFullYear();
+
+    return `${currentYear}-12-31T23:59:59`;
+}
+
 export default function ApiKeysPage() {
     const { uuid } = useParams();
 
@@ -28,12 +35,16 @@ export default function ApiKeysPage() {
     const [reloadToken, setReloadToken] = useState(0);
 
     const [keywordInput, setKeywordInput] = useState('');
+    const [statusInput, setStatusInput] = useState('');
     const [keyword, setKeyword] = useState('');
+    const [status, setStatus] = useState('');
     const [page, setPage] = useState(1);
 
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [createName, setCreateName] = useState('');
-    const [createExpiresAt, setCreateExpiresAt] = useState('');
+    const [createExpiresAt, setCreateExpiresAt] = useState(
+        getDefaultExpiresAt
+    );
     const [createErrors, setCreateErrors] = useState({});
     const [creating, setCreating] = useState(false);
 
@@ -55,6 +66,7 @@ export default function ApiKeysPage() {
             try {
                 const result = await getApiKeys(uuid, {
                     keyword,
+                    status,
                     page,
                 });
 
@@ -84,22 +96,26 @@ export default function ApiKeysPage() {
         return () => {
             ignore = true;
         };
-    }, [uuid, keyword, page, reloadToken]);
+    }, [uuid, keyword, status, page, reloadToken]);
 
     function handleSearch(event) {
         event.preventDefault();
         setKeyword(keywordInput.trim());
+        setStatus(statusInput);
         setPage(1);
     }
 
     function handleClearSearch() {
         setKeywordInput('');
+        setStatusInput('');
         setKeyword('');
+        setStatus('');
         setPage(1);
     }
 
     function openCreateModal() {
         setCreateErrors({});
+        setCreateExpiresAt(getDefaultExpiresAt());
         setCreateModalOpen(true);
     }
 
@@ -110,7 +126,7 @@ export default function ApiKeysPage() {
 
         setCreateModalOpen(false);
         setCreateName('');
-        setCreateExpiresAt('');
+        setCreateExpiresAt(getDefaultExpiresAt());
         setCreateErrors({});
     }
 
@@ -130,7 +146,7 @@ export default function ApiKeysPage() {
 
             setCreateModalOpen(false);
             setCreateName('');
-            setCreateExpiresAt('');
+            setCreateExpiresAt(getDefaultExpiresAt());
             setKeywordInput('');
             setKeyword('');
             setPage(1);
@@ -237,11 +253,23 @@ export default function ApiKeysPage() {
                         }
                     />
 
+                    <CustomSelect
+                        className="list-filter-custom-select"
+                        value={statusInput}
+                        ariaLabel="狀態篩選"
+                        options={[
+                            { value: '', label: '全部狀態' },
+                            { value: 'active', label: '啟用' },
+                            { value: 'inactive', label: '停用' },
+                        ]}
+                        onChange={setStatusInput}
+                    />
+
                     <button type="submit" className="secondary-button">
                         搜尋
                     </button>
 
-                    {keyword && (
+                    {(keyword || status) && (
                         <button
                             type="button"
                             className="text-button"
@@ -295,7 +323,17 @@ export default function ApiKeysPage() {
                                                 1}
                                         </td>
                                         <td>{apiKey.name}</td>
-                                        <td>{apiKey.status_display}</td>
+                                        <td>
+                                            <span
+                                                className={`badge ${
+                                                    apiKey.status === 'active'
+                                                        ? 'badge-success'
+                                                        : 'badge-warning'
+                                                }`}
+                                            >
+                                                {apiKey.status_display}
+                                            </span>
+                                        </td>
                                         <td>{apiKey.last_used_at_display}</td>
                                         <td>{apiKey.expires_at_display}</td>
                                         <td>
@@ -338,7 +376,7 @@ export default function ApiKeysPage() {
 
             <Modal
                 open={createModalOpen}
-                title="建立 API Key"
+                title="新增 API Key"
                 closeDisabled={creating}
                 onClose={closeCreateModal}
                 actions={(
@@ -387,10 +425,12 @@ export default function ApiKeysPage() {
                     </label>
 
                     <label className="form-field">
-                        <span>到期時間（選填）</span>
+                        <span>到期時間</span>
                         <input
                             type="datetime-local"
                             value={createExpiresAt}
+                            step="1"
+                            required
                             onChange={(event) =>
                                 setCreateExpiresAt(event.target.value)
                             }
