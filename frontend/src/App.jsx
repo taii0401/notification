@@ -6,8 +6,9 @@ import {
 } from 'react-router-dom';
 
 import AppLayout from './components/layout/AppLayout';
-import ApiKeysPage from './pages/ApiKeysPage';
 import DashboardPage from './pages/DashboardPage';
+import ApiKeysPage from './pages/ApiKeysPage';
+import TemplatesPage from './pages/TemplatesPage';
 
 export default function App() {
     return (
@@ -21,6 +22,10 @@ export default function App() {
                     <Route
                         path="/projects/:uuid/api-keys"
                         element={<ApiKeysPage />}
+                    />
+                    <Route
+                        path="/projects/:uuid/templates"
+                        element={<TemplatesPage />}
                     />
                 </Route>
             </Routes>

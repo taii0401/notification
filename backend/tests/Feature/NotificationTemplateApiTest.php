@@ -16,7 +16,7 @@ class NotificationTemplateApiTest extends TestCase
         $project = Project::factory()->create();
 
         $response = $this->postJson(
-            "/api/projects/{$project->uuid}/notification-templates",
+            "/api/projects/{$project->uuid}/templates",
             [
                 'code' => 'order_paid',
                 'name' => '訂單付款成功',
@@ -51,12 +51,12 @@ class NotificationTemplateApiTest extends TestCase
         ];
 
         $this->postJson(
-            "/api/projects/{$project->uuid}/notification-templates",
+            "/api/projects/{$project->uuid}/templates",
             $payload
         )->assertCreated();
 
         $this->postJson(
-            "/api/projects/{$project->uuid}/notification-templates",
+            "/api/projects/{$project->uuid}/templates",
             $payload
         )->assertUnprocessable();
     }

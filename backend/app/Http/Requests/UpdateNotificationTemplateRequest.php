@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Enums\NotificationChannel;
 
 class UpdateNotificationTemplateRequest extends FormRequest
 {
@@ -16,9 +17,7 @@ class UpdateNotificationTemplateRequest extends FormRequest
     {
         $project = $this->route('project');
 
-        $template = $this->route(
-            'notification_template'
-        );
+        $template = $this->route('template');
 
         return [
             'code' => [
@@ -51,10 +50,7 @@ class UpdateNotificationTemplateRequest extends FormRequest
             'channel' => [
                 'sometimes',
                 'required',
-                Rule::in([
-                    'email',
-                    'webhook',
-                ]),
+                Rule::enum(NotificationChannel::class),
             ],
 
             'subject' => [

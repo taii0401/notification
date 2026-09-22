@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use App\Enums\NotificationChannel;
 use App\Http\Requests\StoreNotificationTemplateRequest;
 use App\Http\Requests\UpdateNotificationTemplateRequest;
 
@@ -39,13 +40,42 @@ class NotificationTemplateController extends Controller
 
         $templates = $query->paginate(20);
 
+        $data = $templates
+            ->getCollection()
+            ->map(function (NotificationTemplate $template) {
+                return [
+                    'id' => $template->id,
+                    'name' => $template->name,
+                    'code' => $template->code,
+                    'channel' => $template->channel,
+                    'channel_display' => NotificationChannel::labelFor(
+                        $template->channel
+                    ),
+                    'subject' => $template->subject,
+                    'content' => $template->content,
+                    'status' => $template->status,
+                    'status_display' => $template->status_display,
+                    'created_at' => $template->created_at,
+                    'created_at_display' => $template->created_at
+                        ?->format('Y-m-d H:i:s'),
+                    'updated_at' => $template->updated_at,
+                    'updated_at_display' => $template->updated_at
+                        ?->format('Y-m-d H:i:s'),
+                ];
+            });
+        
         return response()->json([
-            'data' => $templates->items(),
+            'data' => $data,
             'meta' => [
                 'current_page' => $templates->currentPage(),
                 'per_page' => $templates->perPage(),
                 'total' => $templates->total(),
                 'last_page' => $templates->lastPage(),
+                'from' => $templates->firstItem(),
+                'to' => $templates->lastItem(),
+            ],
+            'options' => [
+                'channels' => NotificationChannel::options(),
             ],
         ]);
     }
@@ -69,38 +99,38 @@ class NotificationTemplateController extends Controller
         ], 201);
     }
 
-    public function show(Project $project, NotificationTemplate $notificationTemplate): JsonResponse 
+    public function show(Project $project, NotificationTemplate $template): JsonResponse 
     {
-        $this->ensureTemplateBelongsToProject($project, $notificationTemplate);
+        $this->ensureTemplateBelongsToProject($project, $template);
 
         return response()->json([
-            'data' => $notificationTemplate,
+            'data' => $template,
         ]);
     }
 
-    public function update(UpdateNotificationTemplateRequest $request, Project $project, NotificationTemplate $notificationTemplate): JsonResponse 
+    public function update(UpdateNotificationTemplateRequest $request, Project $project, NotificationTemplate $template): JsonResponse 
     {
-        $this->ensureTemplateBelongsToProject($project, $notificationTemplate);
+        $this->ensureTemplateBelongsToProject($project, $template);
 
-        $notificationTemplate->update(
+        $template->update(
             $request->validated()
         );
 
         return response()->json([
             'message' => 'Notification template updated successfully.',
             'data' =>
-                $notificationTemplate->fresh(),
+                $template->fresh(),
         ]);
     }
 
-    public function destroy(Project $project, NotificationTemplate $notificationTemplate): JsonResponse 
+    public function destroy(Project $project, NotificationTemplate $template): JsonResponse 
     {
-        $this->ensureTemplateBelongsToProject($project, $notificationTemplate);
+        $this->ensureTemplateBelongsToProject($project, $template);
 
-        $notificationTemplate->update([
+        $template->update([
             'status' => 'inactive',
         ]);
-        $notificationTemplate->delete();
+        $template->delete();
 
         return response()->json([
             'message' => 'Notification template deleted successfully.',
@@ -110,10 +140,10 @@ class NotificationTemplateController extends Controller
     /**
      * 確認 Template 屬於指定 Project。
      */
-    private function ensureTemplateBelongsToProject(Project $project, NotificationTemplate $notificationTemplate): void
+    private function ensureTemplateBelongsToProject(Project $project, NotificationTemplate $template): void
     {
         abort_unless(
-            $notificationTemplate->project_id === $project->id,
+            $template->project_id === $project->id,
             404
         );
     }

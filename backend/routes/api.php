@@ -22,7 +22,7 @@ Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->exce
 //API Key-重新產生 Key
 Route::post('projects/{project}/api-keys/{apiKey}/regenerate', [ApiKeyController::class, 'regenerate']); 
 //Templates
-Route::apiResource('projects/{project}/notification-templates', NotificationTemplateController::class);
+Route::apiResource('projects/{project}/templates', NotificationTemplateController::class);
 //通知
 Route::middleware('api.key')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 #[Fillable([
     'project_id',
@@ -21,6 +22,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class NotificationTemplate extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected $appends = [
+        'status_display',
+    ];
+
+    protected function statusDisplay(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => match ($this->status) {
+                'active' => '啟用',
+                'inactive' => '停用',
+                default => $this->status,
+            },
+        );
+    }
 
     public function project(): BelongsTo
     {

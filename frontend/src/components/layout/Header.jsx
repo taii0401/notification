@@ -26,11 +26,11 @@ export default function Topbar() {
         loadProject();
     }, [uuid]);
 
-    let pageTitle = 'Dashboard';
+    let pageTitle = '儀錶板';
     if (location.pathname.includes('/notifications')) {
-        pageTitle = 'Notifications';
+        pageTitle = '通知';
     } else if (location.pathname.includes('/templates')) {
-        pageTitle = 'Templates';
+        pageTitle = '模板';
     } else if (location.pathname.includes('/api-keys')) {
         pageTitle = 'API Keys';
     }

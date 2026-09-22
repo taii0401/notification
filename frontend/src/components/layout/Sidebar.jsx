@@ -27,7 +27,7 @@ export default function Sidebar() {
                             : 'nav-item'
                     }
                 >
-                    Dashboard
+                    儀錶板
                 </NavLink>
 
                 <NavLink
@@ -38,7 +38,7 @@ export default function Sidebar() {
                             : 'nav-item'
                     }
                 >
-                    Notifications
+                    通知
                 </NavLink>                
 
                 <NavLink
@@ -60,7 +60,7 @@ export default function Sidebar() {
                             : 'nav-item'
                     }
                 >
-                    Templates
+                    模板
                 </NavLink>
             </nav>
         </aside>

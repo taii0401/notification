@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Enums\NotificationChannel;
 
 class StoreNotificationTemplateRequest extends FormRequest
 {
@@ -42,10 +43,7 @@ class StoreNotificationTemplateRequest extends FormRequest
 
             'channel' => [
                 'required',
-                Rule::in([
-                    'email',
-                    'webhook',
-                ]),
+                Rule::enum(NotificationChannel::class),
             ],
 
             'subject' => [
