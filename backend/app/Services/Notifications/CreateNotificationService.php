@@ -8,7 +8,6 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use App\Exceptions\ApiClientException;
-use App\Jobs\SendNotificationJob;
 use App\Services\Idempotency\RequestHashService;
 
 use App\Models\IdempotencyKey;
@@ -116,18 +115,6 @@ class CreateNotificationService
                     ];
                 }
             );
-
-            if (!$result['replayed']) {
-                SendNotificationJob::dispatch($result['notification']->id);
-
-                $result['notification']->update([
-                    'status' => 'queued',
-                ]);
-
-                $result['delivery']->update([
-                    'status' => 'queued',
-                ]);
-            }
 
             return $result;
         } catch (QueryException $e) {

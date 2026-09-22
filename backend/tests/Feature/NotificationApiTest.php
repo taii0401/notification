@@ -126,7 +126,7 @@ class NotificationApiTest extends TestCase
         );
     }
 
-    public function test_notification_dispatches_job(): void
+    public function test_notification_remains_pending_until_scheduler_dispatches_it(): void
     {
         $this
             ->withToken($this->plainKey)
@@ -137,8 +137,13 @@ class NotificationApiTest extends TestCase
             ])
             ->assertCreated();
 
-        Queue::assertPushed(
+        Queue::assertNotPushed(
             SendNotificationJob::class
         );
+
+        $this->assertDatabaseHas('notifications', [
+            'project_id' => $this->project->id,
+            'status' => 'pending',
+        ]);
     }
 }
