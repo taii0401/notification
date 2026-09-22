@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 #[Fillable([
     'project_id',
@@ -27,6 +28,21 @@ class ApiKey extends Model
             'last_used_at' => 'datetime',
             'expires_at' => 'datetime',
         ];
+    }
+
+    protected $appends = [
+        'status_display',
+    ];
+
+    protected function statusDisplay(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => match ($this->status) {
+                'active' => '啟用',
+                'inactive' => '停用',
+                default => $this->status,
+            },
+        );
     }
 
     public function project(): BelongsTo

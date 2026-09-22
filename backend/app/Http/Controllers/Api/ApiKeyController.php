@@ -31,7 +31,7 @@ class ApiKeyController extends Controller
             $query->where('name', 'like', "%{$keyword}%");
         }
 
-        $apiKeys = $query->latest()->paginate(10);
+        $apiKeys = $query->latest()->paginate(20);
 
         $data = $apiKeys
             ->getCollection()
@@ -41,12 +41,16 @@ class ApiKeyController extends Controller
                     'name' => $apiKey->name,
                     'key_prefix' => $apiKey->key_prefix,
                     'status' => $apiKey->status,
+                    'status_display' => $apiKey->status_display,
                     'last_used_at' => $apiKey->last_used_at,
+                    'last_used_at_display' => $apiKey->last_used_at
+                        ?->format('Y-m-d H:i:s'),
                     'expires_at' => $apiKey->expires_at,
+                    'expires_at_display' => $apiKey->expires_at
+                        ?->format('Y-m-d H:i:s'),
                     'created_at' => $apiKey->created_at,
                     'created_at_display' => $apiKey->created_at
-                        ?->timezone(config('app.timezone'))
-                        ->format('Y/m/d H:i:s'),
+                        ?->format('Y-m-d H:i:s'),
                 ];
             });
 

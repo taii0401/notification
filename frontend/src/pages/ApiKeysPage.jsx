@@ -257,7 +257,7 @@ export default function ApiKeysPage() {
                     className="primary-button"
                     onClick={openCreateModal}
                 >
-                    建立
+                    新增
                 </button>
             </div>
 
@@ -270,8 +270,9 @@ export default function ApiKeysPage() {
                             <tr>
                                 <th>No</th>
                                 <th>名稱</th>
-                                <th>Key</th>
-                                <th>建立時間</th>
+                                <th>狀態</th>
+                                <th>最後使用時間</th>
+                                <th>過期時間</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -279,7 +280,8 @@ export default function ApiKeysPage() {
                         <tbody>
                             {apiKeys.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" className="list-state">
+                                    <td colSpan="5"
+                                        className="empty-state">
                                         目前無資料
                                     </td>
                                 </tr>
@@ -293,12 +295,9 @@ export default function ApiKeysPage() {
                                                 1}
                                         </td>
                                         <td>{apiKey.name}</td>
-                                        <td>
-                                            <code className="api-key-prefix">
-                                                {apiKey.key_prefix ?? ''}********
-                                            </code>
-                                        </td>
-                                        <td>{apiKey.created_at_display}</td>
+                                        <td>{apiKey.status_display}</td>
+                                        <td>{apiKey.last_used_at_display}</td>
+                                        <td>{apiKey.expires_at_display}</td>
                                         <td>
                                             <div className="table-actions">
                                                 <button
