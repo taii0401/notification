@@ -240,7 +240,7 @@ export default function ApiKeysPage() {
     }
 
     return (
-        <div className="api-keys-page">
+        <div className="list-page">
             <div className="list-toolbar">
                 <form className="list-search" onSubmit={handleSearch}>
                     <input

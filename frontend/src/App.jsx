@@ -9,6 +9,7 @@ import AppLayout from './components/layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
 import ApiKeysPage from './pages/ApiKeysPage';
 import TemplatesPage from './pages/TemplatesPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 export default function App() {
     return (
@@ -26,6 +27,10 @@ export default function App() {
                     <Route
                         path="/projects/:uuid/templates"
                         element={<TemplatesPage />}
+                    />
+                    <Route
+                        path="/projects/:uuid/notifications"
+                        element={<NotificationsPage />}
                     />
                 </Route>
             </Routes>

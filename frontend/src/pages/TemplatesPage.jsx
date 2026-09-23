@@ -246,7 +246,7 @@ export default function TemplatesPage() {
     }
 
     return (
-        <div className="templates-page">
+        <div className="list-page">
             <div className="list-toolbar">
                 <form className="list-search" onSubmit={handleSearch}>
                     <input
@@ -299,7 +299,7 @@ export default function TemplatesPage() {
                 {loading ? (
                     <div className="list-state">載入中...</div>
                 ) : (
-                    <table className="notification-table template-table">
+                    <table className="notification-table">
                         <thead>
                             <tr>
                                 <th>No.</th>

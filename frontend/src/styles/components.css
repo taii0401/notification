@@ -418,28 +418,37 @@
 
 .notification-table {
     width: 100%;
-
+    min-width: 100%;
     border-collapse: collapse;
 }
 
 .notification-table th,
 .notification-table td {
-    padding: 14px 22px;
-
-    text-align: left;
-
+    padding: 14px 12px;
+    text-align: center;
+    white-space: nowrap;
     border-bottom: 1px solid var(--color-border-light);
 }
 
 .notification-table th {
     color: var(--color-text-secondary);
-
     font-size: 12px;
     font-weight: 600;
 }
 
 .notification-table tbody tr:last-child td {
     border-bottom: 0;
+}
+
+.notification-table .table-actions {
+    justify-content: center;
+}
+
+.table-date-time {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.25;
 }
 
 
@@ -646,7 +655,20 @@
 .list-search {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 8px;
+    white-space: nowrap;
+}
+
+.list-search .custom-select {
+    width: 160px;
+    flex: 0 0 160px;
+}
+
+.list-search .secondary-button,
+.list-search .text-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 .list-search input {
@@ -715,15 +737,6 @@
 .template-code {
     color: var(--color-text-primary);
     font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-}
-
-.api-keys-page .notification-table th,
-.api-keys-page .notification-table td {
-    text-align: center;
-}
-
-.api-keys-page .table-actions {
-    justify-content: center;
 }
 
 .list-pagination {
@@ -845,6 +858,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    white-space: nowrap;
     gap: 12px;
     padding: 9px 12px;
     color: var(--color-text-primary);
@@ -930,15 +944,6 @@
     font-weight: 600;
 }
 
-.template-table th,
-.template-table td {
-    text-align: center;
-}
-
-.template-table .table-actions {
-    justify-content: center;
-}
-
 .custom-select-option.selected.active {
     background: #eee8dc;
 }
@@ -983,10 +988,6 @@
         flex-wrap: wrap;
     }
 
-    .list-search {
-        flex-wrap: wrap;
-    }
-
     .list-search input {
         width: 100%;
     }
@@ -994,6 +995,31 @@
     .form-grid {
         grid-template-columns: 1fr;
     }
+}
+
+.badge-pending {
+    background: #edf0f2;
+    color: #697582;
+}
+
+.badge-queued {
+    background: #f5eedf;
+    color: #8b6b35;
+}
+
+.badge-processing {
+    background: #e8eef4;
+    color: #506983;
+}
+
+.badge-sent {
+    background: #e8f1ec;
+    color: #426655;
+}
+
+.badge-failed {
+    background: #f7e9e7;
+    color: #934e49;
 }
 
 
