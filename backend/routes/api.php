@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\DashboardStatsController;
     PATCH   /api/projects/{project}     update()
     DELETE  /api/projects/{project}     destroy()
 */
+
 //專案
 Route::apiResource('projects', ProjectController::class);
 //API Key(不可更新)
@@ -24,9 +25,11 @@ Route::post('projects/{project}/api-keys/{apiKey}/regenerate', [ApiKeyController
 //Templates
 Route::apiResource('projects/{project}/templates', NotificationTemplateController::class);
 //通知
+Route::get('projects/{project}/notifications', [NotificationController::class, 'index']);
+Route::get('projects/{project}/notifications/{notification}', [NotificationController::class, 'show']);
+
+
 Route::middleware('api.key')->group(function () {
-    Route::get('notifications', [NotificationController::class, 'index']);
-    Route::get('notifications/{notification}', [NotificationController::class, 'show']);
     //傳送通知
     Route::post('notifications', [NotificationController::class, 'store']);
     //重新發送

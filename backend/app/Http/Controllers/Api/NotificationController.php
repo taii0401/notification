@@ -9,22 +9,20 @@ use Illuminate\Support\Str;
 use Illuminate\Notifications\Notification as LaravelNotification;
 use App\Services\Notifications\CreateNotificationService;
 
+use App\Enums\NotificationChannel;
+use App\Enums\NotificationStatus;
 use App\Http\Requests\StoreNotificationRequest;
 
 use App\Http\Controllers\Controller;
+use App\Models\Project;
 use App\Models\NotificationMessage;
 use App\Models\NotificationDelivery;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, Project $project): JsonResponse
     {
-        $project = $request->attributes->get('current_project');
-
-        $query = NotificationMessage::query()
-            ->where('project_id', $project->id)
-            ->with(['deliveries',]);
-
+        $query = $project->notifications()->latest('scheduled_at');
 
         //filter
         if ($request->filled('status')) {
@@ -57,19 +55,31 @@ class NotificationController extends Controller
                     return [
                         'uuid' => $notification->uuid,
                         'event_type' => $notification->event_type,
+                        'template_name' => $notification->template?->name ?? '-',
                         'channel' => $notification->channel,
+                        'channel_display' => NotificationChannel::labelFor(
+                            $notification->channel
+                        ),
                         'recipient' => $notification->recipient,
                         'status' => $notification->status,
+                        'status_display' => $notification->status->label(),
                         'delivery' => [
                             'provider' => $delivery?->provider,
                             'status' => $delivery?->status,
                             'attempt_count' => $delivery?->attempt_count,
                         ],
                         'scheduled_at' => $notification->scheduled_at,
+                        'scheduled_at_display' => $notification->scheduled_at
+                            ?->format('Y-m-d H:i:s'),
                         'processed_at' => $notification->processed_at,
+                        'processed_at_display' => $notification->processed_at
+                            ?->format('Y-m-d H:i:s'),
                         'sent_at' => $notification->sent_at,
+                        'sent_at_display' => $notification->sent_at
+                            ?->format('Y-m-d H:i:s'),
                         'failed_at' => $notification->failed_at,
-                        'created_at' => $notification->created_at,
+                        'failed_at_display' => $notification->failed_at
+                            ?->format('Y-m-d H:i:s'),
                     ];
                 }),
 
@@ -78,6 +88,12 @@ class NotificationController extends Controller
                 'per_page' => $notifications->perPage(),
                 'total' => $notifications->total(),
                 'last_page' => $notifications->lastPage(),
+                'from' => $notifications->firstItem(),
+                'to' => $notifications->lastItem(),
+            ],
+            'options' => [
+                'channels' => NotificationChannel::options(),
+                'status' => NotificationStatus::options(),
             ],
         ]);
     }
