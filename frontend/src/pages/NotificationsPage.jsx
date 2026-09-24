@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
+import DateTime from '../components/ui/DateTime';
 import CustomSelect from '../components/ui/CustomSelect';
 import Pagination from '../components/ui/Pagination';
 import { getNotifications } from '../api/notifications';
@@ -193,33 +194,36 @@ export default function NotificationsPage() {
                                         <td>
                                             <DateTime
                                                 value={notification.scheduled_at_display}
+                                                multiline
                                             />
                                         </td>
                                         <td>
                                             <DateTime
                                                 value={notification.processed_at_display}
+                                                multiline
                                             />
                                         </td>
                                         <td>
                                             <DateTime
                                                 value={notification.sent_at_display}
+                                                multiline
                                             />
                                         </td>
                                         <td>
                                             <DateTime
                                                 value={notification.failed_at_display}
+                                                multiline
                                             />
                                         </td>
                                         <td>
                                             <div className="table-actions">
-                                                <button
-                                                    type="button"
-                                                    className="table-action-button regenerate-button"
-                                                    title="明細功能準備中"
-                                                    disabled
+                                                <Link
+                                                    className="table-action-button table-action-link regenerate-button"
+                                                    title="檢視通知明細"
+                                                    to={`/projects/${uuid}/notifications/${notification.uuid}`}
                                                 >
                                                     檢視
-                                                </button>
+                                                </Link>
                                             </div>
                                         </td>
                                     </tr>
@@ -237,20 +241,5 @@ export default function NotificationsPage() {
                 )}
             </div>
         </div>
-    );
-}
-
-function DateTime({ value }) {
-    if (!value) {
-        return '-';
-    }
-
-    const [date, time] = value.split(' ');
-
-    return (
-        <span className="table-date-time">
-            <span>{date}</span>
-            {time && <span>{time}</span>}
-        </span>
     );
 }

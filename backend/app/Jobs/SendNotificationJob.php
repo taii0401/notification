@@ -2,44 +2,38 @@
 
 namespace App\Jobs;
 
-use RuntimeException;
-use Throwable;
+use App\Enums\NotificationStatus;
+use App\Models\NotificationMessage;
+use App\Services\Delivery\EmailProvider;
+use App\Services\Delivery\WebhookProvider;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-
-use App\Services\Delivery\EmailProvider;
-use App\Services\Delivery\WebhookProvider;
-
-use App\Enums\NotificationStatus;
-
-use App\Models\NotificationMessage;
+use RuntimeException;
+use Throwable;
 
 class SendNotificationJob implements ShouldQueue
 {
     use Queueable;
 
-    //最多執行 4 次
+    // 最多執行 4 次
     public int $tries = 4;
 
-    //等待時間
+    // 等待時間
     public function backoff(): array
     {
         return [
-            3, //第一次失敗，3 → 30
-            5, //第二次失敗，5 → 120
-            10, //第三次失敗，10 → 600
+            3, // 第一次失敗，3 → 30
+            5, // 第二次失敗，5 → 120
+            10, // 第三次失敗，10 → 600
         ];
     }
 
-    public function __construct(public int $notificationId) 
-    {
-
-    }
+    public function __construct(public int $notificationId) {}
 
     public function handle(EmailProvider $emailProvider, WebhookProvider $webhookProvider): void
     {
-        //只有 queued 才能進入 Job
+        // 只有 queued 才能進入 Job
         $updated = NotificationMessage::query()
             ->where('id', $this->notificationId)
             ->where('status', 'queued')
@@ -51,7 +45,7 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        //processed_at 只記錄「第一次開始處理」的時間
+        // processed_at 只記錄「第一次開始處理」的時間
         $notification = NotificationMessage::with('template', 'deliveries')->findOrFail($this->notificationId);
         if ($notification->processed_at === null) {
             $notification->update([
@@ -59,14 +53,14 @@ class SendNotificationJob implements ShouldQueue
             ]);
         }
 
-        //取得 Delivery
+        // 取得 Delivery
         $delivery = $notification->deliveries->firstOrFail();
         $delivery->update([
             'status' => 'processing',
         ]);
 
-        //建立 Attempt
-        //每一次真正呼叫 Provider 都新增一筆
+        // 建立 Attempt
+        // 每一次真正呼叫 Provider 都新增一筆
         $attemptNo = $delivery->attempt_count + 1;
         $attempt = $delivery->attempts()->create([
             'attempt_no' => $attemptNo,
@@ -76,11 +70,12 @@ class SendNotificationJob implements ShouldQueue
                 'event_type' => $notification->event_type,
                 'payload' => $notification->payload,
             ],
+            'started_at' => now(),
         ]);
-        //Delivery 累計真正送過幾次
+        // Delivery 累計真正送過幾次
         $delivery->increment('attempt_count');
 
-        //Call Provider
+        // Call Provider
         $result = [];
         $result = match ($notification->channel) {
             'email' => $emailProvider->send($notification),
@@ -88,26 +83,29 @@ class SendNotificationJob implements ShouldQueue
             default => [],
         };
 
-        //Success
+        // Success
         if ($result['success'] === true) {
+            $sentAt = now();
+
             $attempt->update([
                 'status' => 'success',
                 'response_code' => $result['response_code'] ?? 200,
                 'response_body' => $result['response_body'] ?? null,
-                'finished_at' => now(),
+                'finished_at' => $sentAt,
             ]);
 
             $delivery->update([
                 'status' => NotificationStatus::SENT,
                 'provider_message_id' => $result['provider_message_id'] ?? null,
-                'last_error' => null,
-                'sent_at' => now(),
+                //'last_error' => null,
+                'sent_at' => $sentAt,
+                'failed_at' => null,
             ]);
 
             $notification->update([
                 'status' => NotificationStatus::SENT,
-                'sent_at' => now(),
-                'failed_at' => null, //最後成功時 failed_at 應保持 NULL
+                'sent_at' => $sentAt,
+                'failed_at' => null, // 最後成功時 failed_at 應保持 NULL
             ]);
 
             Log::info(
@@ -125,29 +123,31 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        //Failure
+        // Failure
         $responseCode = $result['response_code'] ?? null;
         $responseBody = $result['response_body'] ?? null;
         $errorType = $result['error_type'] ?? 'provider_error';
         $errorMessage = $result['error_message'] ?? 'Notification delivery failed.';
+        $failedAt = now();
+
         $attempt->update([
             'status' => 'failed',
             'response_code' => $responseCode,
             'response_body' => $responseBody,
             'error_type' => $errorType,
             'error_message' => $errorMessage,
-            'finished_at' => now(),
+            'finished_at' => $failedAt,
         ]);
 
         $delivery->update([
             'status' => 'failed',
             'last_error' => $errorMessage,
-            'failed_at' => now(),
+            'failed_at' => $failedAt,
         ]);
 
         $notification->update([
             'status' => 'failed',
-            'failed_at' => now(),
+            'failed_at' => $failedAt,
         ]);
 
         Log::warning(
@@ -164,7 +164,7 @@ class SendNotificationJob implements ShouldQueue
             ]
         );
 
-        //Retry 前，回復狀態 status
+        // Retry 前，回復狀態 status
         $delivery->update([
             'status' => 'pending',
             'last_error' => $errorMessage,
@@ -180,15 +180,15 @@ class SendNotificationJob implements ShouldQueue
                 'notification_uuid' => $notification->uuid,
                 'delivery_id' => $delivery->id,
                 'attempt_no' => $attemptNo,
-                'job_attempt' => $this->attempts(), //Queue 自己的 Job attempt 次數
+                'job_attempt' => $this->attempts(), // Queue 自己的 Job attempt 次數
                 'response_code' => $responseCode,
                 'response_body' => $responseBody,
                 'error_message' => $errorMessage,
             ]
         );
 
-        //Provider 回 false 不代表 Laravel Queue 知道失敗
-        //必須 throw Exception，Laravel Queue 才會依照 backoff() Retry
+        // Provider 回 false 不代表 Laravel Queue 知道失敗
+        // 必須 throw Exception，Laravel Queue 才會依照 backoff() Retry
         throw new RuntimeException(
             $errorMessage
         );
@@ -198,17 +198,19 @@ class SendNotificationJob implements ShouldQueue
      * Laravel Retry 次數耗盡後執行
      * 次數還沒用完就會跑進這裡
      */
-    public function failed(?Throwable $exception): void 
+    public function failed(?Throwable $exception): void
     {
         $notification = NotificationMessage::query()->with('deliveries')->find($this->notificationId);
 
-        if (!$notification) {
+        if (! $notification) {
             return;
         }
 
+        $failedAt = now();
+
         $notification->update([
             'status' => 'failed',
-            'failed_at' => now(),
+            'failed_at' => $failedAt,
         ]);
 
         $delivery = $notification->deliveries->first();
@@ -216,7 +218,7 @@ class SendNotificationJob implements ShouldQueue
         if ($delivery) {
             $delivery->update([
                 'status' => 'failed',
-                'failed_at' => now(),
+                'failed_at' => $failedAt,
                 'last_error' => $exception?->getMessage(),
             ]);
         }

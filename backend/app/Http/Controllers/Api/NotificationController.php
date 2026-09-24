@@ -135,23 +135,29 @@ class NotificationController extends Controller
         ], $result['replayed'] ? 200 : 201);
     }
 
-    public function show(Request $request, NotificationMessage $notification): JsonResponse 
+    public function show(Project $project, NotificationMessage $notification): JsonResponse
     {
-        $project = $request->attributes->get('current_project');
-
         if ($notification->project_id !== $project->id) {
             abort(404);
         }
 
-        $notification->load(['template', 'deliveries.attempts']);
+        $notification->load([
+            'template',
+            'deliveries' => fn ($query) => $query->orderBy('id'),
+            'deliveries.attempts' => fn ($query) => $query->orderBy('attempt_no'),
+        ]);
 
         return response()->json([
             'data' => [
                 'uuid' => $notification->uuid,
                 'event_type' => $notification->event_type,
                 'channel' => $notification->channel,
+                'channel_display' => NotificationChannel::labelFor(
+                    $notification->channel
+                ),
                 'recipient' => $notification->recipient,
                 'status' => $notification->status,
+                'status_display' => $notification->status->label(),
                 'payload' => $notification->payload,
                 'metadata' => $notification->metadata,
                 'template' => $notification->template
@@ -162,21 +168,43 @@ class NotificationController extends Controller
                     ]
                     : null,
                 'scheduled_at' => $notification->scheduled_at,
+                'scheduled_at_display' => $notification->scheduled_at
+                    ?->format('Y-m-d H:i:s'),
                 'processed_at' => $notification->processed_at,
+                'processed_at_display' => $notification->processed_at
+                    ?->format('Y-m-d H:i:s'),
                 'sent_at' => $notification->sent_at,
+                'sent_at_display' => $notification->sent_at
+                    ?->format('Y-m-d H:i:s'),
                 'failed_at' => $notification->failed_at,
+                'failed_at_display' => $notification->failed_at
+                    ?->format('Y-m-d H:i:s'),
                 'created_at' => $notification->created_at,
+                'created_at_display' => $notification->created_at
+                    ?->format('Y-m-d H:i:s'),
                 'deliveries' => $notification->deliveries->map(function ($delivery) {
                     return [
+                        'id' => $delivery->id,
                         'provider' => $delivery->provider,
                         'status' => $delivery->status,
                         'attempt_count' => $delivery->attempt_count,
                         'provider_message_id' => $delivery->provider_message_id,
                         'last_error' => $delivery->last_error,
                         'sent_at' => $delivery->sent_at,
+                        'sent_at_display' => $delivery->sent_at
+                            ?->format('Y-m-d H:i:s'),
                         'failed_at' => $delivery->failed_at,
+                        'failed_at_display' => $delivery->failed_at
+                            ?->format('Y-m-d H:i:s'),
+                        'created_at' => $delivery->created_at,
+                        'created_at_display' => $delivery->created_at
+                            ?->format('Y-m-d H:i:s'),
+                        'updated_at' => $delivery->updated_at,
+                        'updated_at_display' => $delivery->updated_at
+                            ?->format('Y-m-d H:i:s'),
                         'attempts' => $delivery->attempts->map(function ($attempt) {
                             return [
+                                'id' => $attempt->id,
                                 'attempt_no' => $attempt->attempt_no,
                                 'status' => $attempt->status,
                                 'response_code' => $attempt->response_code,
@@ -184,7 +212,11 @@ class NotificationController extends Controller
                                 'error_type' => $attempt->error_type,
                                 'error_message' => $attempt->error_message,
                                 'started_at' => $attempt->started_at,
+                                'started_at_display' => $attempt->started_at
+                                    ?->format('Y-m-d H:i:s'),
                                 'finished_at' => $attempt->finished_at,
+                                'finished_at_display' => $attempt->finished_at
+                                    ?->format('Y-m-d H:i:s'),
                             ];
                         }),
                     ];

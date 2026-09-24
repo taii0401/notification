@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Queue;
 use App\Jobs\SendNotificationJob;
 
 use App\Models\ApiKey;
+use App\Models\NotificationMessage;
 use App\Models\Project;
 
 class NotificationApiTest extends TestCase
@@ -124,6 +125,59 @@ class NotificationApiTest extends TestCase
             'notification_deliveries',
             1
         );
+    }
+
+    public function test_notification_detail_returns_multiple_deliveries_and_attempts(): void
+    {
+        $notification = NotificationMessage::factory()->create([
+            'project_id' => $this->project->id,
+        ]);
+
+        foreach (['smtp', 'ses'] as $provider) {
+            $delivery = $notification->deliveries()->create([
+                'provider' => $provider,
+                'status' => 'failed',
+                'attempt_count' => 2,
+            ]);
+
+            $delivery->attempts()->createMany([
+                [
+                    'attempt_no' => 1,
+                    'status' => 'failed',
+                    'error_message' => 'Temporary provider error.',
+                ],
+                [
+                    'attempt_no' => 2,
+                    'status' => 'success',
+                    'response_code' => 200,
+                ],
+            ]);
+        }
+
+        $this
+            ->getJson(
+                "/api/projects/{$this->project->uuid}/notifications/{$notification->uuid}"
+            )
+            ->assertOk()
+            ->assertJsonCount(2, 'data.deliveries')
+            ->assertJsonCount(2, 'data.deliveries.0.attempts')
+            ->assertJsonCount(2, 'data.deliveries.1.attempts')
+            ->assertJsonPath('data.deliveries.0.attempts.0.attempt_no', 1)
+            ->assertJsonPath('data.deliveries.0.attempts.1.attempt_no', 2);
+    }
+
+    public function test_notification_detail_cannot_be_read_from_another_project(): void
+    {
+        $anotherProject = Project::factory()->create();
+        $notification = NotificationMessage::factory()->create([
+            'project_id' => $anotherProject->id,
+        ]);
+
+        $this
+            ->getJson(
+                "/api/projects/{$this->project->uuid}/notifications/{$notification->uuid}"
+            )
+            ->assertNotFound();
     }
 
     public function test_notification_remains_pending_until_scheduler_dispatches_it(): void

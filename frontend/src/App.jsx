@@ -1,6 +1,5 @@
 import {
     BrowserRouter,
-    Navigate,
     Route,
     Routes,
 } from 'react-router-dom';
@@ -10,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import ApiKeysPage from './pages/ApiKeysPage';
 import TemplatesPage from './pages/TemplatesPage';
 import NotificationsPage from './pages/NotificationsPage';
+import NotificationDetailPage from './pages/NotificationDetailPage';
 
 export default function App() {
     return (
@@ -31,6 +31,10 @@ export default function App() {
                     <Route
                         path="/projects/:uuid/notifications"
                         element={<NotificationsPage />}
+                    />
+                    <Route
+                        path="/projects/:uuid/notifications/:notificationUuid"
+                        element={<NotificationDetailPage />}
                     />
                 </Route>
             </Routes>

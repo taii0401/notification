@@ -21,3 +21,11 @@ export async function getNotifications(
         options: response.data.options,
     };
 }
+
+export async function getNotification(projectUuid, notificationUuid) {
+    const response = await apiClient.get(
+        `/projects/${projectUuid}/notifications/${notificationUuid}`
+    );
+
+    return response.data.data;
+}
