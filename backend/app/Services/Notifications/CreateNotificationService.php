@@ -24,7 +24,14 @@ class CreateNotificationService
     public function execute(Project $project, array $data, ?string $idempotencyKey = null): array 
     {
         $template = null;
-        if (!empty($data['template'])) {
+        if (isset($data['template_id'])) {
+            $template = $project
+                ->notificationTemplates()
+                ->whereKey($data['template_id'])
+                ->where('channel', $data['channel'])
+                ->where('status', 'active')
+                ->first();
+        } elseif (!empty($data['template'])) {
             $template = $project
                 ->notificationTemplates()
                 ->where('code', $data['template'])
@@ -32,11 +39,27 @@ class CreateNotificationService
                 ->where('status', 'active')
                 ->first();
 
-            if (!$template) {
-                throw new NotFoundHttpException(
-                    'Notification template not found.'
-                );
-            }
+        }
+
+        if ((isset($data['template_id']) || !empty($data['template'])) && !$template) {
+            throw new NotFoundHttpException(
+                'Notification template not found.'
+            );
+        }
+
+        $eventType = $data['event_type'] ?? $template?->code;
+        $recipient = $data['recipient'] ?? config('services.webhook.url');
+
+        if (!$eventType) {
+            throw new \InvalidArgumentException(
+                'Event type or notification template is required.'
+            );
+        }
+
+        if (!$recipient) {
+            throw new \InvalidArgumentException(
+                'Recipient or WEBHOOK_URL configuration is required.'
+            );
         }
 
         $requestHash = null;
@@ -50,9 +73,10 @@ class CreateNotificationService
         //檢查是否已經在執行了
         if ($idempotencyKey !== null) {
             $requestHash = $this->requestHashService->make([
-                'event_type' => $data['event_type'],
+                'event_type' => $eventType,
                 'channel' => $data['channel'],
-                'recipient' => $data['recipient'],
+                'recipient' => $recipient,
+                'template_id' => $template?->id,
                 'template' => $data['template'] ?? null,
                 'data' => $data['data'] ?? null,
                 'scheduled_at' => $data['scheduled_at'] ?? null,
@@ -67,14 +91,14 @@ class CreateNotificationService
 
         try {
             $result = DB::transaction(
-                function () use ($project, $template, $data, $idempotencyKey, $requestHash) {
+                function () use ($project, $template, $data, $eventType, $recipient, $idempotencyKey, $requestHash) {
                     //建立 Notification
                     $notification = NotificationMessage::create([
                         'project_id' => $project->id,
                         'template_id' => $template?->id,
-                        'event_type' => $data['event_type'],
+                        'event_type' => $eventType,
                         'channel' => $data['channel'],
-                        'recipient' => $data['recipient'],
+                        'recipient' => $recipient,
                         'payload' => $data['data'] ?? null,
                         'metadata' => null,
                         'status' => 'pending',

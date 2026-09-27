@@ -29,3 +29,22 @@ export async function getNotification(projectUuid, notificationUuid) {
 
     return response.data.data;
 }
+
+export async function sendNotification(
+    apiKey,
+    payload,
+    idempotencyKey
+) {
+    const response = await apiClient.post(
+        '/notifications',
+        payload,
+        {
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Idempotency-Key': idempotencyKey,
+            },
+        }
+    );
+
+    return response.data.data;
+}

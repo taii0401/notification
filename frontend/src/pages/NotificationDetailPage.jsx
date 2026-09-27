@@ -121,7 +121,7 @@ export default function NotificationDetailPage() {
                     <DetailField label="成功派送時間">
                         <DateTime value={notification.sent_at_display} />
                     </DetailField>
-                    <DetailField label="最終失敗時間">
+                    <DetailField label="最後失敗時間">
                         <DateTime value={notification.failed_at_display} />
                     </DetailField>
                 </div>
@@ -169,7 +169,7 @@ function DeliverySection({ delivery, index }) {
                 <DetailField label="成功時間">
                     <DateTime value={delivery.sent_at_display} />
                 </DetailField>
-                <DetailField label="最終失敗時間">
+                <DetailField label="最後失敗時間">
                     <DateTime value={delivery.failed_at_display} />
                 </DetailField>
             </div>

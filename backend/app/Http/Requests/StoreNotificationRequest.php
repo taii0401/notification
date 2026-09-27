@@ -27,7 +27,8 @@ class StoreNotificationRequest extends FormRequest
     {
         return [
             'event_type' => [
-                'required',
+                'nullable',
+                'required_without:template_id',
                 'string',
                 'max:100',
             ],
@@ -42,17 +43,20 @@ class StoreNotificationRequest extends FormRequest
             ],
 
             'recipient' => [
-                'required',
+                Rule::requiredIf($this->input('channel') === 'email'),
+                'nullable',
                 'string',
                 'max:500',
                 Rule::when(
                     $this->input('channel') === 'email',
                     ['email']
                 ),
-                Rule::when(
-                    $this->input('channel') === 'webhook',
-                    ['url']
-                ),
+            ],
+
+            'template_id' => [
+                'nullable',
+                'integer',
+                'min:1',
             ],
 
             'template' => [
@@ -101,6 +105,9 @@ class StoreNotificationRequest extends FormRequest
 
             'recipient.required' => '通知接收者為必填。',
             'recipient.max' => '通知接收者最多 500 個字元。',
+
+            'template_id.integer' => '通知範本格式不正確。',
+            'template_id.min' => '通知範本格式不正確。',
 
             'template.max' => '通知範本代碼最多 100 個字元。',
 

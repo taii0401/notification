@@ -38,7 +38,8 @@ class NotificationTemplateController extends Controller
             );
         }
 
-        $templates = $query->paginate(20);
+        $perPage = min(max($request->integer('per_page', 20), 1), 100);
+        $templates = $query->paginate($perPage);
 
         $data = $templates
             ->getCollection()

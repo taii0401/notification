@@ -127,6 +127,42 @@ class NotificationApiTest extends TestCase
         );
     }
 
+    public function test_notification_can_use_template_id_and_configured_webhook_url(): void
+    {
+        config()->set(
+            'services.webhook.url',
+            'http://mock-receiver:9000/success'
+        );
+
+        $template = $this->project->notificationTemplates()->create([
+            'name' => '訂單付款成功通知',
+            'code' => 'order_paid_webhook',
+            'channel' => 'webhook',
+            'subject' => null,
+            'content' => '{"order_no":"{{ order_no }}"}',
+            'status' => 'active',
+        ]);
+
+        $this
+            ->withToken($this->plainKey)
+            ->postJson('/api/notifications', [
+                'channel' => 'webhook',
+                'template_id' => $template->id,
+                'data' => [
+                    'order_no' => 'ORD-001',
+                ],
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('notifications', [
+            'project_id' => $this->project->id,
+            'template_id' => $template->id,
+            'event_type' => 'order_paid_webhook',
+            'channel' => 'webhook',
+            'recipient' => 'http://mock-receiver:9000/success',
+        ]);
+    }
+
     public function test_notification_detail_returns_multiple_deliveries_and_attempts(): void
     {
         $notification = NotificationMessage::factory()->create([

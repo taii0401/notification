@@ -40,6 +40,7 @@ return [
     ],
     
     'webhook' => [
+        'url' => env('WEBHOOK_URL'),
         'connect_timeout' => env('WEBHOOK_CONNECT_TIMEOUT', 2),
         'timeout' => env('WEBHOOK_TIMEOUT', 5),
     ],

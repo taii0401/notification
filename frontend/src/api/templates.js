@@ -2,15 +2,23 @@ import apiClient from './client';
 
 export async function getTemplates(
     projectUuid,
-    { keyword = '', status = '', page = 1 } = {}
+    {
+        keyword = '',
+        channel = '',
+        status = '',
+        page = 1,
+        perPage = 20,
+    } = {}
 ) {
     const response = await apiClient.get(
         `/projects/${projectUuid}/templates`,
         {
             params: {
                 keyword: keyword || undefined,
+                channel: channel || undefined,
                 status: status || undefined,
                 page,
+                per_page: perPage,
             },
         }
     );
