@@ -13,10 +13,10 @@ enum NotificationStatus: string
     {
         return match ($this) {
             self::PENDING => '待處理',
-            self::QUEUED => '已排入佇列',
+            self::QUEUED => '已排入',
             self::PROCESSING => '處理中',
-            self::SENT => '派送成功',
-            self::FAILED => '最終失敗',
+            self::SENT => '成功',
+            self::FAILED => '失敗',
         };
     }
 

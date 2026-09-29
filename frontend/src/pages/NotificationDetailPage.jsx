@@ -274,9 +274,9 @@ function displayValue(value) {
 function statusLabel(status) {
     const labels = {
         pending: '待處理',
-        queued: '已排入佇列',
+        queued: '已排入',
         processing: '處理中',
-        sent: '派送成功',
+        sent: '成功',
         success: '成功',
         failed: '失敗',
     };
