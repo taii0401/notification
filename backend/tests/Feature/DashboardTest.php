@@ -5,12 +5,12 @@ namespace Tests\Feature;
 use App\Models\ApiKey;
 use App\Models\NotificationMessage;
 use App\Models\Project;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_dashboard_requires_api_key(): void
     {

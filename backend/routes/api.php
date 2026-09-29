@@ -24,6 +24,10 @@ Route::apiResource('projects/{project}/api-keys', ApiKeyController::class)->exce
 Route::post('projects/{project}/api-keys/{apiKey}/regenerate', [ApiKeyController::class, 'regenerate']); 
 //Templates
 Route::apiResource('projects/{project}/templates', NotificationTemplateController::class);
+//Dashboard
+Route::get('projects/{project}/dashboard', [DashboardStatsController::class, 'index']);
+Route::get('projects/{project}/dashboard/delivery-chart',[DashboardStatsController::class, 'deliveryChart']
+);
 //通知
 Route::get('projects/{project}/notifications', [NotificationController::class, 'index']);
 Route::get('projects/{project}/notifications/{notification}', [NotificationController::class, 'show']);
@@ -34,7 +38,4 @@ Route::middleware('api.key')->group(function () {
     Route::post('notifications', [NotificationController::class, 'store']);
     //重新發送
     Route::post('notifications/{notification}/retry', [NotificationController::class, 'retry']);
-
-    //Dashboard
-    Route::get('dashboard', [DashboardStatsController::class, 'index']);
 });

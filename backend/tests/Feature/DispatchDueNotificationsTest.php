@@ -5,13 +5,13 @@ namespace Tests\Feature;
 use App\Jobs\SendNotificationJob;
 use App\Models\NotificationMessage;
 use App\Models\Project;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DispatchDueNotificationsTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_it_dispatches_due_pending_notifications(): void
     {
