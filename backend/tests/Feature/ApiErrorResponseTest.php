@@ -4,12 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\ApiKey;
 use App\Models\Project;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class ApiErrorResponseTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_api_key_is_required(): void
     {

@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
-
 use App\Models\ApiKey;
 use App\Models\Project;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Queue;
+use Tests\TestCase;
 
 class NotificationIdempotencyTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private Project $project;
+
     private string $plainKey;
 
     protected function setUp(): void

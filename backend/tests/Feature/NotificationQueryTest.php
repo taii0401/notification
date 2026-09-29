@@ -2,20 +2,19 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use App\Enums\NotificationStatus;
-
 use App\Models\ApiKey;
 use App\Models\NotificationMessage;
 use App\Models\Project;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\TestCase;
 
 class NotificationQueryTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private Project $project;
+
     private string $plainKey;
 
     protected function setUp(): void

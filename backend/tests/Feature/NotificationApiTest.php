@@ -2,21 +2,20 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
-
 use App\Jobs\SendNotificationJob;
-
 use App\Models\ApiKey;
 use App\Models\NotificationMessage;
 use App\Models\Project;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Queue;
+use Tests\TestCase;
 
 class NotificationApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private Project $project;
+
     private string $plainKey;
 
     protected function setUp(): void
